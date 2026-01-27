@@ -2,7 +2,7 @@ import React from "react";
 import { GoArrowRight } from "react-icons/go";
 const Pricing = () => {
   return (
-    <div className="container mt-5">
+    <div className="container mt-5 text-center">
       <div className="row">
         <div className="col-4">
           <h1 className="fs-3 mb-4">Unbeatable pricing</h1>
