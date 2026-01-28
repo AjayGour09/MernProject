@@ -53,6 +53,10 @@ const ProductPage = () => {
         googlePlay="media/images/googlePlayBadge.svg"
         aapStore="media/images/appstoreBadge.svg"
       />
+        <p className="text-center mt-4 text-muted">
+        Want to know more about our technology stack? Check out the{" "}
+        <span> Zerodha.tech</span> blog.
+      </p>
       <Universe />
     </div>
   );
