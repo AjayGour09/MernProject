@@ -94,19 +94,19 @@ const Footer = () => {
           Address: Zerodha Broking Ltd., #153/154, 4th Cross, Dollars Colony,
           Opp. Clarence Public School, J.P Nagar 4th Phase, Bengaluru - 560078,
           Karnataka, India. For any complaints pertaining to securities broking
-          please write to complaints@zerodha.com, for DP related to
-          dp@zerodha.com. Please ensure you carefully read the Risk Disclosure
+          please write to <span className="text-primary hover-text cursor-pointer">complaints@zerodha.com,</span> for DP related to
+          <span className="text-primary hover-text cursor-pointer">dp@zerodha.com.</span> Please ensure you carefully read the Risk Disclosure
           Document as prescribed by SEBI | ICF
         </p>
         <p style={{ fontSize: "12px" }}>
           complaints@zerodha.com, for DP related to dp@zerodha.com. Please
           ensure you carefully read the Risk Disclosure Document as prescribed
-          by SEBI | ICF Procedure to file a complaint on SEBI SCORES: Register
+          by SEBI | ICF Procedure to file a complaint on <span className="text-primary hover-text cursor-pointer">SEBI SCORES: </span> Register
           on SCORES portal. Mandatory details for filing complaints on SCORES:
           Name, PAN, Address, Mobile Number, E-mail ID. Benefits: Effective
           Communication, Speedy redressal of the grievances
         </p>
-        <p style={{ fontSize: "12px" }}>
+        <p style={{ fontSize: "12px" }} className="text-primary hover-text cursor-pointer">
           Smart Online Dispute Resolution | Grievances Redressal Mechanism
         </p>
         <p style={{ fontSize: "12px" }}>
@@ -123,8 +123,8 @@ const Footer = () => {
           statement issued by NSDL/CDSL every month.
         </p>
         <p style={{ fontSize: "12px" }}>
-          India's largest broker based on networth as per NSE. NSE broker
-          factsheet
+          India's largest broker based on networth as per NSE. <span className="text-primary hover-text cursor-pointer">NSE broker
+          factsheet</span>
         </p>
         <p style={{ fontSize: "12px" }}>
           "Prevent unauthorised transactions in your account. Update your mobile
@@ -141,7 +141,7 @@ const Footer = () => {
           in your bank account. As a business we don't give stock tips, and have
           not authorized anyone to trade on behalf of others. If you find anyone
           claiming to be part of Zerodha and offering such services, please
-          create a ticket here.
+         <span className="text-primary hover-text cursor-pointer"> create a ticket here.</span>
         </p>
         <p style={{ fontSize: "12px" }}>
           *Customers availing insurance advisory services offered by Ditto
