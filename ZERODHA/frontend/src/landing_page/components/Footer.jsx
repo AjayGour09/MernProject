@@ -9,7 +9,7 @@ import { FaTelegram } from "react-icons/fa";
 
 const Footer = () => {
   return (
-    <div className="container " style={{ marginTop: "120px" }}>
+    <div className="container bg-light" style={{ marginTop: "120px" }}>
       <div className="row">
         <div className="col ms-5 mt-3">
           <img src="media/images/logo.svg" alt="" style={{ width: "50%" }} />

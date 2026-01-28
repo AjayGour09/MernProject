@@ -19,3 +19,6 @@ code {
   cursor: pointer;
   color: var(--bs-primary); /* Bootstrap primary */
 }
+.font-text{
+  font-size: 17px;
+}
