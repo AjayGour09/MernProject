@@ -91,7 +91,7 @@ Funds</h5>
           <p className="text-primary">Trading FAQs </p>
           <p className="text-primary">Buying and selling</p>
           <p className="text-primary">Starting sip</p>
-          <p>coin app</p>
+          <p className="text-primary">coin app</p>
           
         </div>
       </div>
