@@ -11,7 +11,7 @@ const Footer = () => {
   return (
     <div className="container bg-light" style={{ marginTop: "120px" }}>
       <div className="row">
-        <div className="col ms-5 mt-3">
+        <div className="col ms-5 mt-4">
           <img src="media/images/logo.svg" alt="" style={{ width: "50%" }} />
           <p className="mt-3">
             © 2010 - 2025, Zerodha Broking Ltd. All rights reserved.
