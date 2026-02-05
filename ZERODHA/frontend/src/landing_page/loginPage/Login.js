@@ -1,12 +1,9 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-
-const SignUp = () => {
+const Login = () => {
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
     password: "",
-    confirmPassword: "",
   });
 
   const handleChange = (e) => {
@@ -19,46 +16,26 @@ const SignUp = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
+    console.log("Login Data:", formData);
 
-    console.log("Signup Data:", formData);
+    alert("Login successful!");
 
-    alert("Form submitted successfully!");
-
-    // ✅ Clear form after submit
+    // ✅ Clear form after submit (frontend only)
     setFormData({
-      name: "",
       email: "",
       password: "",
-      confirmPassword: "",
     });
   };
 
   return (
     <div className="container mt-5">
       <div className="row justify-content-center">
-        <div className="col-md-6">
+        <div className="col-md-5">
           <div className="card shadow">
             <div className="card-body">
-              <h3 className="text-center mb-4">Sign Up</h3>
+              <h3 className="text-center mb-4">Login</h3>
 
               <form onSubmit={handleSubmit}>
-                {/* Name */}
-                <div className="mb-3">
-                  <label className="form-label">Full Name</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
                 {/* Email */}
                 <div className="mb-3">
                   <label className="form-label">Email</label>
@@ -85,26 +62,13 @@ const SignUp = () => {
                   />
                 </div>
 
-                {/* Confirm Password */}
-                <div className="mb-3">
-                  <label className="form-label">Confirm Password</label>
-                  <input
-                    type="password"
-                    className="form-control"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                <button type="submit" className="btn btn-primary w-100">
-                  Create Account
+                <button type="submit" className="btn btn-success w-100">
+                  Login
                 </button>
               </form>
 
               <p className="text-center mt-3">
-                Already have an account? <Link to='/login'>Login</Link>
+                Don’t have an account? <Link to="/signup">Sign Up</Link>
               </p>
             </div>
           </div>
@@ -114,4 +78,4 @@ const SignUp = () => {
   );
 };
 
-export default SignUp;
+export default Login;

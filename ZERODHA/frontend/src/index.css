@@ -22,3 +22,57 @@ code {
 .font-text{
   font-size: 17px;
 }
+/* Navbar custom links */
+.nav-custom {
+  color: #212529;
+  font-weight: 500;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+/* Hover */
+.nav-custom:hover {
+  color: #0d6efd;
+}
+
+/* Active route */
+.nav-custom.active {
+  color: #0d6efd;
+}
+
+/* Underline animation */
+.nav-custom::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -4px;
+  left: 50%;
+  background-color: #0d6efd;
+  transition: all 0.3s ease;
+}
+
+.nav-custom:hover::after,
+.nav-custom.active::after {
+  width: 100%;
+  left: 0;
+}
+/* Hero links - default */
+.hero-link {
+  color: rgba(255, 255, 255, 0.85); /* off-white */
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+/* Hover - HIGH CONTRAST */
+.hero-link:hover {
+  color: #ffffff;           /* pure white */
+  text-decoration: underline;
+  transform: translateX(2px);
+}
+
+/* Optional: active state */
+.hero-link:active {
+  color: #e7f1ff;           /* very light blue */
+}

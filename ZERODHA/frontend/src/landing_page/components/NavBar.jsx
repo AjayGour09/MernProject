@@ -1,18 +1,23 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 const NavBar = () => {
   return (
-    <nav
-      class="navbar navbar-expand-lg  bg-body-tertiary border-bottom"
-      style={{ backgroundColor: "#FFF" }}
-    >
-      <div class="container p-2">
-        <Link class="navbar-brand" to="/">
-          <img src="media/images/logo.svg" alt="" style={{ width: "25%" }} />
+    <nav className="navbar navbar-expand-lg bg-body-tertiary border-bottom">
+      <div className="container p-2">
+
+        {/* LEFT : LOGO */}
+        <Link className="navbar-brand" to="/">
+          <img
+            src="media/images/logo.svg"
+            alt="Logo"
+            style={{ width: "120px" }}
+          />
         </Link>
+
+        {/* MOBILE TOGGLE */}
         <button
-          class="navbar-toggler"
+          className="navbar-toggler"
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarSupportedContent"
@@ -20,36 +25,45 @@ const NavBar = () => {
           aria-expanded="false"
           aria-label="Toggle navigation"
         >
-          <span class="navbar-toggler-icon"></span>
+          <span className="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-5 flex gap-5">
-            <li class="nav-item">
-              <Link class="nav-link active" aria-current="page" to="/signup">
-                Signup
-              </Link>
-            </li>
-             <li class="nav-item">
-              <Link class="nav-link active" aria-current="page" to="/about">
+
+        <div className="collapse navbar-collapse" id="navbarSupportedContent">
+
+          {/* CENTER : MENU */}
+          <ul className="navbar-nav mx-auto gap-4">
+            <li className="nav-item">
+              <NavLink className="nav-link nav-custom" to="/about">
                 About
-              </Link>
+              </NavLink>
             </li>
-             <li class="nav-item">
-              <Link class="nav-link active" aria-current="page" to="/products">
+            <li className="nav-item">
+              <NavLink className="nav-link nav-custom" to="/products">
                 Products
-              </Link>
+              </NavLink>
             </li>
-             <li class="nav-item">
-              <Link class="nav-link active" aria-current="page" to="/pricing">
+            <li className="nav-item">
+              <NavLink className="nav-link nav-custom" to="/pricing">
                 Pricing
-              </Link>
+              </NavLink>
             </li>
-             <li class="nav-item">
-              <Link class="nav-link active" aria-current="page" to="support">
+            <li className="nav-item">
+              <NavLink className="nav-link nav-custom" to="/support">
                 Support
-              </Link>
+              </NavLink>
             </li>
           </ul>
+
+          {/* RIGHT : AUTH BUTTONS */}
+          <div className="d-flex gap-3">
+            <Link to="/login" className="btn btn-outline-primary">
+              Login
+            </Link>
+            <Link to="/signup" className="btn btn-primary">
+              Sign Up
+            </Link>
+          </div>
+
         </div>
       </div>
     </nav>
