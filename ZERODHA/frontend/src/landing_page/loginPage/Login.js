@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+
 const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
@@ -13,18 +14,38 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("Login Data:", formData);
+    try {
+      const res = await fetch("http://localhost:3002/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-    alert("Login successful!");
+      const data = await res.json();
 
-    // ✅ Clear form after submit (frontend only)
-    setFormData({
-      email: "",
-      password: "",
-    });
+      if (!res.ok) {
+        alert(data.message);
+        return;
+      }
+
+      // ✅ token save
+      localStorage.setItem("token", data.token);
+
+      // ✅ dashboard open
+      window.location.href = "http://localhost:3001";
+
+    } catch (error) {
+      alert("Something went wrong");
+      console.log(error);
+    }
   };
 
   return (
@@ -36,7 +57,6 @@ const Login = () => {
               <h3 className="text-center mb-4">Login</h3>
 
               <form onSubmit={handleSubmit}>
-                {/* Email */}
                 <div className="mb-3">
                   <label className="form-label">Email</label>
                   <input
@@ -49,7 +69,6 @@ const Login = () => {
                   />
                 </div>
 
-                {/* Password */}
                 <div className="mb-3">
                   <label className="form-label">Password</label>
                   <input
