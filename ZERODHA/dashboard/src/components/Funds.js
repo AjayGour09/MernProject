@@ -54,7 +54,7 @@ const Funds = () => {
               <p>Exposure</p>
               <p>0.00</p>
             </div>
-            <div className="data">
+            <div className="data ">
               <p>Options premium</p>
               <p>0.00</p>
             </div>
