@@ -1,5 +1,5 @@
 import React from "react";
-import { FaAppStore, FaArrowRightLong } from "react-icons/fa6";
+import { FaArrowRightLong } from "react-icons/fa6";
 
 const LeftSection = ({
   imageURL,
@@ -8,39 +8,43 @@ const LeftSection = ({
   tryDemo,
   learnMore,
   googlePlay,
-  aapStore,
+  appStore,
 }) => {
   return (
-    <div className="container p-2">
-      <div className="row mt-2">
-        <div className="col-6 mt-5">
+    <div className="container py-5">
+      <div className="row align-items-center">
+        {/* LEFT IMAGE */}
+        <div className="col-md-6 text-center text-md-start mb-4 mb-md-0">
           <img
             src={imageURL}
-            alt=""
-            className="mt-5"
-            style={{ marginLeft: "80px" }}
+            alt={productName}
+            className="img-fluid"
+            style={{ maxHeight: "400px" }}
           />
         </div>
-        <div className="col-6 mt-5 p-5" style={{}}>
-          <h2 className="mt-5 ms-5 text-muted fs-2">{productName}</h2>
-          <p className="ms-5 font-text">{productDescription}</p>
-          <div className="d-flex gap-5 ms-5 font-text">
+
+        {/* RIGHT TEXT */}
+        <div className="col-md-6">
+          <h2 className="fs-2 fw-bold text-muted mb-3">{productName}</h2>
+          <p className="font-text mb-4">{productDescription}</p>
+
+          <div className="d-flex flex-wrap gap-3 mb-4">
             {tryDemo && (
-              <p className="text-primary hover-text cursor-pointer">
+              <span className="text-primary hover-text cursor-pointer d-flex align-items-center gap-1">
                 {tryDemo} <FaArrowRightLong />
-              </p>
+              </span>
             )}
 
             {learnMore && (
-              <p className="text-primary hover-text cursor-pointer">
+              <span className="text-primary hover-text cursor-pointer d-flex align-items-center gap-1">
                 {learnMore} <FaArrowRightLong />
-              </p>
+              </span>
             )}
           </div>
 
-          <div className="d-flex gap-4 mt-3 ms-5">
-            <img src={googlePlay} alt="" />
-            <img src={aapStore} alt="" />
+          <div className="d-flex gap-3">
+            {googlePlay && <img src={googlePlay} alt="Google Play Store" />}
+            {appStore && <img src={appStore} alt="Apple App Store" />}
           </div>
         </div>
       </div>

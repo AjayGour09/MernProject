@@ -1,30 +1,35 @@
 import React from "react";
 import { GoArrowRight } from "react-icons/go";
+
 const Pricing = () => {
   return (
-    <div className="container mt-5 text-center">
-      <div className="row">
-        <div className="col-4">
-          <h1 className="fs-3 mb-4">Unbeatable pricing</h1>
-          <p className="text-muted">
-            We pioneered the concept of discount broking and price transparency
-            in India. Flat fees and no hidden charges.
-          </p>
-          <div>
-            <a href="#" className="text-decoration-none">
-              See Pricing <GoArrowRight />
-            </a>
+    <div className="container py-5 text-center">
+      {/* Heading & Description */}
+      <h2 className="fs-3 mb-3">Unbeatable Pricing</h2>
+      <p className="text-muted mb-4">
+        We pioneered the concept of discount broking and price transparency in India.
+        Flat fees and no hidden charges.
+      </p>
+      <a href="#" className="text-decoration-none text-primary mb-5 d-inline-block">
+        See Pricing <GoArrowRight />
+      </a>
+
+      {/* Pricing Cards */}
+      <div className="row justify-content-center mt-4 gy-3">
+        <div className="col-12 col-md-5 col-lg-4">
+          <div className="border rounded p-4 h-100">
+            <h2 className="mb-3">₹0</h2>
+            <p className="text-muted mb-0">
+              Free equity delivery and direct mutual funds
+            </p>
           </div>
         </div>
-        <div className="col-2"></div>
-        <div className="col-6 d-flex gap-1">
-          <div className="border p-4" style={{width:"38%"}}>
-            <h2 className="d-flex justify-content-center">₹0</h2>
-            <p className="d-flex align-items-center mt-3 text-muted">Free equity delivery and &nbsp; &nbsp; &nbsp;&nbsp;&nbsp; direct mutual funds</p>
-          </div>
-          <div className="border p-4" style={{width:"38%"}}>
-            <h2 className="d-flex justify-content-center">₹20</h2>
-            <p className="d-flex align-items-center mt-3 ms-4 text-muted">intraday and F&Q</p>
+        <div className="col-12 col-md-5 col-lg-4">
+          <div className="border rounded p-4 h-100">
+            <h2 className="mb-3">₹20</h2>
+            <p className="text-muted mb-0">
+              Intraday and F&O trades
+            </p>
           </div>
         </div>
       </div>

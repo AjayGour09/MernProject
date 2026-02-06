@@ -8,55 +8,54 @@ const ProductPage = () => {
   return (
     <div>
       <Hero />
+
       <LeftSection
         imageURL="media/images/kite.png"
-        productName="kite"
-        productDescription="Our ultra-fast flagship trading platform with 
-            streaming market data, advanced charts, an 
-            elegant UI, and more. Enjoy the Kite 
-            experience seamlessly on your Android and  iOS devices."
+        productName="Kite"
+        productDescription={`Our ultra-fast flagship trading platform with streaming market data, advanced charts, an elegant UI, and more. Enjoy the Kite experience seamlessly on your Android and iOS devices.`}
         tryDemo="Try Demo"
         learnMore="Learn More"
         googlePlay="media/images/googlePlayBadge.svg"
-        aapStore="media/images/appstoreBadge.svg"
+        appStore="media/images/appstoreBadge.svg"
       />
+
       <RightSection
         imageURL="media/images/console.png"
         productName="Console"
-        productDescription=" The central dashboard for your Zerodha  account. Gain insights
-            into your trades and  investments with in-depth reports 
-            and visualisations."
+        productDescription={`The central dashboard for your Zerodha account. Gain insights into your trades and investments with in-depth reports and visualisations.`}
         learnMore="Learn More"
       />
+
       <LeftSection
         imageURL="media/images/coin.png"
         productName="Coin"
-        productDescription="Buy direct mutual funds online, commission- 
-            free, delivered directly to your Demat 
-            account. Enjoy the investment experience
-           on your Android and iOS devices."
+        productDescription={`Buy direct mutual funds online, commission-free, delivered directly to your Demat account. Enjoy the investment experience on your Android and iOS devices.`}
         tryDemo="Coin"
         learnMore="Learn More"
         googlePlay="media/images/googlePlayBadge.svg"
-        aapStore="media/images/appstoreBadge.svg"
+        appStore="media/images/appstoreBadge.svg"
       />
+
       <RightSection
         imageURL="media/images/kiteconnect.png"
         productName="Kite Connect API"
-        productDescription=" Build powerful trading platforms and experiences with our super simple HTTP/JSON APIs. If you are a startup, build your investment app and showcase it to our clientbase."
+        productDescription={`Build powerful trading platforms and experiences with our simple HTTP/JSON APIs. If you are a startup, build your investment app and showcase it to our clientbase.`}
         learnMore="Learn More"
       />
+
       <LeftSection
         imageURL="media/images/varsity.png"
         productName="Varsity mobile"
-        productDescription="An easy to grasp, collection of stock market lessons with in-depth coverage and illustrations. Content is broken down into bite-size cards to help you learn on the go."
+        productDescription={`An easy to grasp collection of stock market lessons with in-depth coverage and illustrations. Content is broken down into bite-size cards to help you learn on the go.`}
         googlePlay="media/images/googlePlayBadge.svg"
-        aapStore="media/images/appstoreBadge.svg"
+        appStore="media/images/appstoreBadge.svg"
       />
-        <p className="text-center mt-4 text-muted">
+
+      <p className="text-center mt-4 text-muted">
         Want to know more about our technology stack? Check out the{" "}
-        <span> Zerodha.tech</span> blog.
+        <span className="text-primary hover-text cursor-pointer">Zerodha.tech</span> blog.
       </p>
+
       <Universe />
     </div>
   );

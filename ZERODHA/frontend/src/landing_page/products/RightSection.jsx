@@ -5,22 +5,33 @@ const RightSection = ({
   imageURL,
   productName,
   productDescription,
+  learnMore,
 }) => {
   return (
-    <div className="container p-5">
-      <div className="row mt-5 p-5">
-        <div className="col-6 " style={{ marginTop: "250px" }}>
-          <h2 className="ms-5 fs-2">{productName}</h2>
-          <p className="ms-5 font-text">
-           {productDescription}
-          </p>
-          <p className="text-primary hover-text cursor-pointer ms-5">
-            Learn more <FaArrowRightLong />
-          </p>
+    <div className="container py-5">
+      <div className="row align-items-center">
+
+        {/* Text Section */}
+        <div className="col-lg-6 col-md-12 mb-4 mb-lg-0">
+          <h2 className="fs-2 mb-3">{productName}</h2>
+          <p className="font-text">{productDescription}</p>
+
+          {learnMore && (
+            <p className="text-primary hover-text cursor-pointer">
+              {learnMore} <FaArrowRightLong />
+            </p>
+          )}
         </div>
-        <div className="col-6">
-          <img src={imageURL} alt="" className="me-5" />
+
+        {/* Image Section */}
+        <div className="col-lg-6 col-md-12 text-center">
+          <img
+            src={imageURL}
+            alt={productName}
+            style={{ width: "90%", maxWidth: "400px" }}
+          />
         </div>
+
       </div>
     </div>
   );

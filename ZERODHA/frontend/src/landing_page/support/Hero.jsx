@@ -20,19 +20,25 @@ const Hero = () => {
               placeholder="Eg: How do I activate F&O, why is my order getting rejected?"
             />
 
-            <div className="d-flex flex-wrap gap-3">
-              <a href="#" className="hero-link">Track account opening</a>
-              <a href="#" className="hero-link">Track segment activation</a>
-              <a href="#" className="hero-link">Intraday</a>
-              <a href="#" className="hero-link">Margins</a>
-              <a href="#" className="hero-link">Kite user manual</a>
+            <div className="d-flex flex-wrap gap-2">
+              {[
+                "Track account opening",
+                "Track segment activation",
+                "Intraday",
+                "Margins",
+                "Kite user manual"
+              ].map((link, idx) => (
+                <a key={idx} href="#" className="hero-link btn btn-outline-light btn-sm mb-2">
+                  {link}
+                </a>
+              ))}
             </div>
           </div>
 
           {/* RIGHT SECTION */}
           <div className="col-lg-6 col-12">
-            <div className="d-flex justify-content-end mb-3">
-              <a href="#" className="hero-link fw-medium">
+            <div className="d-flex justify-content-lg-end justify-content-start mb-3">
+              <a href="#" className="hero-link btn btn-outline-light btn-sm">
                 Track Ticket
               </a>
             </div>
@@ -40,16 +46,16 @@ const Hero = () => {
             <h6 className="mb-3 fw-semibold">Featured</h6>
 
             <ol className="ps-3 hero-list">
-              <li className="mb-2">
-                <a href="#" className="hero-link">
-                  Current Takeovers and Delisting – January 2024
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hero-link">
-                  Latest intraday leverages – MIS & CO
-                </a>
-              </li>
+              {[
+                "Current Takeovers and Delisting – January 2024",
+                "Latest intraday leverages – MIS & CO"
+              ].map((item, idx) => (
+                <li key={idx} className="mb-2">
+                  <a href="#" className="hero-link text-white text-decoration-none">
+                    {item}
+                  </a>
+                </li>
+              ))}
             </ol>
           </div>
 

@@ -11,22 +11,20 @@ const SignUp = () => {
 
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const validate = () => {
-    let newErrors = {};
+    const newErrors = {};
 
-    if (formData.name.trim().length < 3) {
+    if (!formData.name.trim() || formData.name.trim().length < 3) {
       newErrors.name = "Name must be at least 3 characters";
     }
 
-    if (!/^[\w.]+@(gmail|yahoo|outlook)\.com$/.test(formData.email)) {
+    if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
       newErrors.email = "Enter a valid email";
     }
 
@@ -44,6 +42,7 @@ const SignUp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSuccessMsg("");
 
     if (!validate()) return;
 
@@ -52,9 +51,7 @@ const SignUp = () => {
     try {
       const res = await fetch("http://localhost:3002/api/auth/signup", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
@@ -66,18 +63,10 @@ const SignUp = () => {
 
       if (!res.ok) {
         alert(data.message || "Signup failed");
-        setIsLoading(false);
-        return;
+      } else {
+        setSuccessMsg("Signup successful 🎉");
+        setFormData({ name: "", email: "", password: "", confirmPassword: "" });
       }
-
-      alert("Signup successful 🎉");
-
-      setFormData({
-        name: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-      });
     } catch (error) {
       alert("Server error");
     } finally {
@@ -93,58 +82,74 @@ const SignUp = () => {
             <div className="card-body">
               <h3 className="text-center mb-4">Sign Up</h3>
 
-              <form onSubmit={handleSubmit}>
+              {successMsg && (
+                <div className="alert alert-success text-center">{successMsg}</div>
+              )}
+
+              <form onSubmit={handleSubmit} noValidate>
                 <div className="mb-3">
-                  <label>Full Name</label>
+                  <label htmlFor="name" className="form-label">Full Name</label>
                   <input
                     type="text"
+                    id="name"
                     name="name"
-                    className="form-control"
+                    className={`form-control ${errors.name ? "is-invalid" : ""}`}
                     value={formData.name}
                     onChange={handleChange}
+                    required
                   />
-                  {errors.name && <small className="text-danger">{errors.name}</small>}
+                  {errors.name && <div className="invalid-feedback">{errors.name}</div>}
                 </div>
 
                 <div className="mb-3">
-                  <label>Email</label>
+                  <label htmlFor="email" className="form-label">Email</label>
                   <input
                     type="email"
+                    id="email"
                     name="email"
-                    className="form-control"
+                    className={`form-control ${errors.email ? "is-invalid" : ""}`}
                     value={formData.email}
                     onChange={handleChange}
+                    required
                   />
-                  {errors.email && <small className="text-danger">{errors.email}</small>}
+                  {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                 </div>
 
                 <div className="mb-3">
-                  <label>Password</label>
+                  <label htmlFor="password" className="form-label">Password</label>
                   <input
                     type="password"
+                    id="password"
                     name="password"
-                    className="form-control"
+                    className={`form-control ${errors.password ? "is-invalid" : ""}`}
                     value={formData.password}
                     onChange={handleChange}
+                    required
                   />
-                  {errors.password && <small className="text-danger">{errors.password}</small>}
+                  {errors.password && <div className="invalid-feedback">{errors.password}</div>}
                 </div>
 
                 <div className="mb-3">
-                  <label>Confirm Password</label>
+                  <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
                   <input
                     type="password"
+                    id="confirmPassword"
                     name="confirmPassword"
-                    className="form-control"
+                    className={`form-control ${errors.confirmPassword ? "is-invalid" : ""}`}
                     value={formData.confirmPassword}
                     onChange={handleChange}
+                    required
                   />
                   {errors.confirmPassword && (
-                    <small className="text-danger">{errors.confirmPassword}</small>
+                    <div className="invalid-feedback">{errors.confirmPassword}</div>
                   )}
                 </div>
 
-                <button className="btn btn-primary w-100" disabled={isLoading}>
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100"
+                  disabled={isLoading}
+                >
                   {isLoading ? "Creating Account..." : "Create Account"}
                 </button>
               </form>

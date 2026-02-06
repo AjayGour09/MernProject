@@ -1,18 +1,32 @@
-import React from 'react'
+import React from 'react';
+
 const Hero = () => {
   return (
-    <>
-    <div className='container p-5'>
-      <div className='row text-center mb-5'>
-       
-          <img src='media/images/homeHero.png' alt="Hero image" className='mb-5'/>
-          <h1 className='mt-5'>Invest in everything</h1>
-          <p>Online platform to invest in stocks, derivatives, mutual funds, and more</p>
-          <button className='w-25 btn btn-outline-primary mt-2 p-2 mb-5' style={{width:"25%",margin: "0 auto"}}>Signup now</button>
+    <section className="container py-5 text-center">
+      {/* Hero Image */}
+      <div className="mb-4">
+        <img
+          src="media/images/homeHero.png"
+          alt="Hero"
+          className="img-fluid"
+          style={{ maxWidth: "100%" }}
+        />
       </div>
-    </div>
-    </>
-  )
-}
+
+      {/* Heading */}
+      <h1 className="mb-3">Invest in everything</h1>
+      <p className="text-muted mb-4">
+        Online platform to invest in stocks, derivatives, mutual funds, and more
+      </p>
+
+      {/* CTA Button */}
+      <div>
+        <button className="btn btn-outline-primary btn-lg px-4 py-2">
+          Sign Up Now
+        </button>
+      </div>
+    </section>
+  );
+};
 
 export default Hero;
