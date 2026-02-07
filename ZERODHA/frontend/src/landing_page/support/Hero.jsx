@@ -28,7 +28,7 @@ const Hero = () => {
                 "Margins",
                 "Kite user manual"
               ].map((link, idx) => (
-                <a key={idx} href="#" className="hero-link btn btn-outline-light btn-sm mb-2">
+                <a key={idx} href="#" className="hero-link btn btn-outline-light btn-sm mb-2 text-danger">
                   {link}
                 </a>
               ))}
@@ -38,7 +38,7 @@ const Hero = () => {
           {/* RIGHT SECTION */}
           <div className="col-lg-6 col-12">
             <div className="d-flex justify-content-lg-end justify-content-start mb-3">
-              <a href="#" className="hero-link btn btn-outline-light btn-sm">
+              <a href="#" className="hero-link text-danger btn btn-outline-light btn-sm">
                 Track Ticket
               </a>
             </div>

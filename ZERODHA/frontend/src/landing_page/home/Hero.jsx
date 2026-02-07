@@ -1,4 +1,5 @@
-import React from 'react';
+import React from "react";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
@@ -21,9 +22,11 @@ const Hero = () => {
 
       {/* CTA Button */}
       <div>
-        <button className="btn btn-outline-primary btn-lg px-4 py-2">
-          Sign Up Now
-        </button>
+        <Link to='signup'>
+          <button className="btn btn-outline-primary btn-lg px-4 py-2">
+            Sign Up Now
+          </button>
+        </Link>
       </div>
     </section>
   );

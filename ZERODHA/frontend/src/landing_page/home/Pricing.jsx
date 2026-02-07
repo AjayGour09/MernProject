@@ -1,5 +1,6 @@
 import React from "react";
 import { GoArrowRight } from "react-icons/go";
+import { Link } from "react-router-dom";
 
 const Pricing = () => {
   return (
@@ -10,9 +11,9 @@ const Pricing = () => {
         We pioneered the concept of discount broking and price transparency in India.
         Flat fees and no hidden charges.
       </p>
-      <a href="#" className="text-decoration-none text-primary mb-5 d-inline-block">
+      <Link to="/pricing" className="text-decoration-none text-primary mb-5 d-inline-block">
         See Pricing <GoArrowRight />
-      </a>
+      </Link>
 
       {/* Pricing Cards */}
       <div className="row justify-content-center mt-4 gy-3">
