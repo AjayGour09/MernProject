@@ -24,7 +24,7 @@ app.get("/home", (req, res) => {
   return res.json({ message: "Hello" });
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server Started At PORT ${port}`);
   connectDB();
 });
