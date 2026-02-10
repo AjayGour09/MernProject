@@ -16,13 +16,13 @@ const LandingPage = () => {
       </nav>
       <div className='flex justify-around items-center mt-5'>
         <div className='text-white'>
-          <p className='text-3xl pt-2'><span className='text-amber-600'>Connect </span> With Your</p>
-          <p className='text-3xl pt-2'>Loved Ones</p>
+          <p className='text-5xl pt-2'><span className='text-amber-600'>Connect </span> With Your</p>
+          <p className='text-4xl pt-2'>Loved Ones</p>
           <p className='dark mt-3'>Cover a distance by Let's Connect Videocall</p>
           <button className='bg-amber-500 p-2 rounded rounded-1 mt-3 cursor-pointer'>Get Started</button>
         </div>
-        <div className='mt-20 w-[500px]'>
-          <img src={VideoImage} alt="" />
+        <div>
+          <img src={VideoImage} alt=""  className='mt-20 w-[500px]' />
         </div>
       </div>
     </div>
