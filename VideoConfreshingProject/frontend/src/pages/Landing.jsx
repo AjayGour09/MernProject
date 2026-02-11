@@ -1,5 +1,6 @@
 import React from 'react'
 import VideoImage from '../../public/mobile.png'
+import { Link } from 'react-router-dom'
 
 const LandingPage = () => {
   return (
@@ -10,7 +11,7 @@ const LandingPage = () => {
         </div>
         <div className='flex p-2 gap-9 font-semibold me-5 cursor-pointer'>
           <h4 className='mt-2 text-lg'>join as Guest </h4>
-          <h4 className='mt-2 text-lg'>Register</h4>
+          <Link to="/register" className='mt-2 text-lg'>Register</Link>
           <h4 className='bg-amber-500 p-2 w-25 text-center text-lg rounded'>Login</h4>
         </div>
       </nav>
