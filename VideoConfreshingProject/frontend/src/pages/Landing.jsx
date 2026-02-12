@@ -10,9 +10,9 @@ export default function LandingPage() {
       
       {/* Navbar */}
       <nav className="flex justify-between items-center px-6 md:px-20 py-5 bg-white/70 backdrop-blur-md shadow-md sticky top-0 z-50">
-        <h2 className="text-3xl font-extrabold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent tracking-wide">
+        <Link to='/' className="text-3xl font-extrabold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent tracking-wide">
           Let's Connect
-        </h2>
+        </Link>
 
         <div className="hidden md:flex gap-10 items-center text-gray-700 font-semibold">
           <p

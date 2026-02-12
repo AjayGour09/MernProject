@@ -1,5 +1,6 @@
 import React from "react";
 import { AuthContext } from "../contexts/AuthContext";
+import bgImage from '../assets/background.png'
 
 export default function Authentication() {
   const [username, setUsername] = React.useState("");
@@ -42,8 +43,7 @@ export default function Authentication() {
       <div
         className="hidden md:flex w-1/2 bg-cover bg-center"
         style={{
-          backgroundImage:
-            "url(https://source.unsplash.com/random?wallpapers)",
+          backgroundImage:{bgImage},
         }}
       ></div>
 

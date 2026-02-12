@@ -1,7 +1,8 @@
 import React, { useContext, useState } from "react";
 import withAuth from "../utils/withAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate ,Link} from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
+import logo from '../assets/logo3.png'
 
 function HomeComponent() {
   let navigate = useNavigate();
@@ -18,9 +19,9 @@ function HomeComponent() {
 
       {/* Navbar */}
       <div className="flex justify-between items-center px-6 md:px-16 py-4 bg-white shadow-md">
-        <h2 className="text-2xl font-bold text-orange-500">
-          Apna Video Call
-        </h2>
+        <Link to="/" className="text-2xl font-bold text-orange-500">
+          Let's Connect
+        </Link>
 
         <div className="flex items-center gap-6">
           <button
@@ -72,7 +73,7 @@ function HomeComponent() {
         {/* Right Panel */}
         <div className="md:w-1/2 flex justify-center">
           <img
-            src="/logo3.png"
+            src={logo}
             alt="Video Call"
             className="w-72 md:w-[420px] object-contain drop-shadow-2xl hover:scale-105 transition duration-500"
           />

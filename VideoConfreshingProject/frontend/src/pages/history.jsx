@@ -13,7 +13,7 @@ export default function History() {
         const history = await getHistoryOfUser();
         setMeetings(history);
       } catch {
-        // Snackbar later
+        
       }
     };
 
