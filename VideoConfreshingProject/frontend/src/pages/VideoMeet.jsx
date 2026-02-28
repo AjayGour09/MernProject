@@ -12,6 +12,7 @@ export default function VideoMeet() {
   const localVideoref = useRef();
   const localStream = useRef();
   const connections = useRef({});
+  const iceQueue = useRef({});
 
   const [video, setVideo] = useState(true);
   const [audio, setAudio] = useState(true);
@@ -23,176 +24,179 @@ export default function VideoMeet() {
 
   // ================= CONNECT =================
   const connect = async () => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+
     setAskForUsername(false);
 
+    // Socket connection
     socketRef.current = io(server_url);
 
     socketRef.current.on("connect", () => {
       socketRef.current.emit("join-call", window.location.pathname);
     });
 
+    // Get local media
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: true,
     });
-
     localStream.current = stream;
-    localVideoref.current.srcObject = stream;
 
-    // ============ USER JOINED ============
-    socketRef.current.on("user-joined", (id, clients) => {
-      clients.forEach((socketListId) => {
-        if (socketListId === socketRef.current.id) return;
+    if (localVideoref.current) {
+      localVideoref.current.srcObject = stream;
+      localVideoref.current.play().catch(() => {});
+    }
 
-        connections.current[socketListId] =
-          new RTCPeerConnection(peerConfigConnections);
-
-        // Add local tracks
-        localStream.current.getTracks().forEach((track) => {
-          connections.current[socketListId].addTrack(
-            track,
-            localStream.current
-          );
-        });
-
-        // ICE Candidate
-        connections.current[socketListId].onicecandidate = (event) => {
-          if (event.candidate) {
-            socketRef.current.emit(
-              "signal",
-              socketListId,
-              JSON.stringify({ ice: event.candidate })
-            );
-          }
-        };
-
-        // Remote Stream
-        connections.current[socketListId].ontrack = (event) => {
-          setVideos((prevVideos) => {
-            const alreadyExists = prevVideos.find(
-              (v) => v.socketId === socketListId
-            );
-            if (alreadyExists) return prevVideos;
-
-            return [
-              ...prevVideos,
-              { socketId: socketListId, stream: event.streams[0] },
-            ];
-          });
-        };
-
-        // 🔥 CREATE OFFER
-        connections.current[socketListId]
-          .createOffer()
-          .then((description) => {
-            connections.current[socketListId]
-              .setLocalDescription(description)
-              .then(() => {
-                socketRef.current.emit(
-                  "signal",
-                  socketListId,
-                  JSON.stringify({
-                    sdp: connections.current[socketListId].localDescription,
-                  })
-                );
-              });
-          });
-      });
+    // ================= EXISTING USERS =================
+    socketRef.current.on("existing-users", (clients) => {
+      clients.forEach((id) => createPeerConnection(id, true));
     });
 
-    // ============ SIGNAL ============
+    // ================= NEW USER JOINED =================
+    socketRef.current.on("user-joined", (id) => {
+      createPeerConnection(id, false);
+    });
+
+    // ================= SIGNAL =================
     socketRef.current.on("signal", async (fromId, message) => {
       const signal = JSON.parse(message);
-
-      if (!connections.current[fromId]) {
-        connections.current[fromId] =
-          new RTCPeerConnection(peerConfigConnections);
-
-        localStream.current.getTracks().forEach((track) => {
-          connections.current[fromId].addTrack(
-            track,
-            localStream.current
-          );
-        });
-
-        connections.current[fromId].ontrack = (event) => {
-          setVideos((prevVideos) => {
-            const alreadyExists = prevVideos.find(
-              (v) => v.socketId === fromId
-            );
-            if (alreadyExists) return prevVideos;
-
-            return [
-              ...prevVideos,
-              { socketId: fromId, stream: event.streams[0] },
-            ];
-          });
-        };
-
-        connections.current[fromId].onicecandidate = (event) => {
-          if (event.candidate) {
-            socketRef.current.emit(
-              "signal",
-              fromId,
-              JSON.stringify({ ice: event.candidate })
-            );
-          }
-        };
-      }
+      if (!connections.current[fromId]) createPeerConnection(fromId, false);
+      const pc = connections.current[fromId];
 
       if (signal.sdp) {
-        await connections.current[fromId].setRemoteDescription(
-          new RTCSessionDescription(signal.sdp)
-        );
+        await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+
+        // Flush queued ICE candidates
+        if (iceQueue.current[fromId]) {
+          for (let ice of iceQueue.current[fromId]) {
+            await pc.addIceCandidate(new RTCIceCandidate(ice));
+          }
+          iceQueue.current[fromId] = [];
+        }
 
         if (signal.sdp.type === "offer") {
-          const answer =
-            await connections.current[fromId].createAnswer();
-          await connections.current[fromId].setLocalDescription(answer);
-
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
           socketRef.current.emit(
             "signal",
             fromId,
-            JSON.stringify({
-              sdp: connections.current[fromId].localDescription,
-            })
+            JSON.stringify({ sdp: pc.localDescription })
           );
         }
       }
 
       if (signal.ice) {
-        await connections.current[fromId].addIceCandidate(
-          new RTCIceCandidate(signal.ice)
-        );
+        if (pc.remoteDescription) {
+          await pc.addIceCandidate(new RTCIceCandidate(signal.ice));
+        } else {
+          if (!iceQueue.current[fromId]) iceQueue.current[fromId] = [];
+          iceQueue.current[fromId].push(signal.ice);
+        }
       }
     });
 
-    // ============ USER LEFT ============
+    // ================= USER LEFT =================
     socketRef.current.on("user-left", (id) => {
       if (connections.current[id]) {
         connections.current[id].close();
         delete connections.current[id];
       }
-
       setVideos((prev) => prev.filter((v) => v.socketId !== id));
     });
   };
 
-  // ================= TOGGLE =================
+  // ================= CREATE PEER CONNECTION =================
+  const createPeerConnection = (id, createOffer) => {
+    const pc = new RTCPeerConnection(peerConfigConnections);
+    connections.current[id] = pc;
+
+    // Add local tracks first
+    if (localStream.current) {
+      localStream.current.getTracks().forEach((track) => pc.addTrack(track, localStream.current));
+    }
+
+    // Remote track
+    pc.ontrack = (event) => {
+      setVideos((prev) => {
+        const newVideo = { socketId: id, stream: event.streams[0] };
+        const exists = prev.find((v) => v.socketId === id);
+        if (exists) {
+          return prev.map((v) => (v.socketId === id ? newVideo : v));
+        }
+        return [...prev, newVideo];
+      });
+    };
+
+    // ICE candidates
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socketRef.current.emit("signal", id, JSON.stringify({ ice: event.candidate }));
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      console.log("Connection State:", pc.connectionState, id);
+    };
+
+    // Create offer after adding tracks
+    if (createOffer) {
+      pc.createOffer().then((offer) => {
+        pc.setLocalDescription(offer).then(() => {
+          socketRef.current.emit("signal", id, JSON.stringify({ sdp: pc.localDescription }));
+        });
+      });
+    }
+  };
+
+  // ================= TOGGLE VIDEO / AUDIO =================
   const handleVideo = () => {
-    localStream.current.getVideoTracks()[0].enabled = !video;
-    setVideo(!video);
+    if (localStream.current) {
+      localStream.current.getVideoTracks()[0].enabled = !video;
+      setVideo(!video);
+    }
   };
 
   const handleAudio = () => {
-    localStream.current.getAudioTracks()[0].enabled = !audio;
-    setAudio(!audio);
+    if (localStream.current) {
+      localStream.current.getAudioTracks()[0].enabled = !audio;
+      setAudio(!audio);
+    }
   };
 
+  // ================= END CALL =================
   const handleEndCall = () => {
-    localStream.current.getTracks().forEach((track) => track.stop());
-    socketRef.current.disconnect();
+    if (localStream.current) {
+      localStream.current.getTracks().forEach((track) => track.stop());
+      localStream.current = null;
+    }
+
+    Object.values(connections.current).forEach((pc) => pc.close());
+    connections.current = {};
+
+    setVideos([]);
+
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+
     navigate("/home");
+  };
+
+  // ================= VIDEO PLAYER COMPONENT =================
+  const VideoPlayer = ({ stream }) => {
+    const ref = useRef();
+    useEffect(() => {
+      if (ref.current && stream) {
+        ref.current.srcObject = stream;
+        ref.current.onloadedmetadata = () => ref.current.play().catch(() => {});
+      }
+    }, [stream]);
+
+    return <video ref={ref} autoPlay playsInline className="w-80 h-60 bg-black rounded" />;
   };
 
   // ================= UI =================
@@ -208,10 +212,7 @@ export default function VideoMeet() {
             onChange={(e) => setUsername(e.target.value)}
             className="px-4 py-2 rounded bg-gray-700"
           />
-          <button
-            onClick={connect}
-            className="bg-orange-500 px-6 py-2 rounded"
-          >
+          <button onClick={connect} className="bg-orange-500 px-6 py-2 rounded">
             Join Call
           </button>
         </div>
@@ -222,36 +223,22 @@ export default function VideoMeet() {
             ref={localVideoref}
             autoPlay
             muted
+            playsInline
             className="w-60 fixed bottom-6 right-6 border-2 border-orange-500 rounded"
           />
 
           {/* Remote Videos */}
           <div className="flex flex-wrap gap-4 p-6">
             {videos.map((video) => (
-              <video
-                key={video.socketId}
-                autoPlay
-                ref={(ref) => {
-                  if (ref && video.stream) {
-                    ref.srcObject = video.stream;
-                  }
-                }}
-                className="w-80 h-60 bg-black rounded"
-              />
+              <VideoPlayer key={video.socketId} stream={video.stream} />
             ))}
           </div>
 
           {/* Controls */}
           <div className="fixed bottom-0 w-full flex justify-center gap-6 py-4 bg-gray-800">
-            <button onClick={handleVideo}>
-              {video ? "🎥" : "🚫🎥"}
-            </button>
-            <button onClick={handleAudio}>
-              {audio ? "🎤" : "🔇"}
-            </button>
-            <button onClick={handleEndCall}>
-              📞❌
-            </button>
+            <button onClick={handleVideo}>{video ? "🎥" : "🚫🎥"}</button>
+            <button onClick={handleAudio}>{audio ? "🎤" : "🔇"}</button>
+            <button onClick={handleEndCall}>📞❌</button>
           </div>
         </>
       )}
