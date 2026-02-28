@@ -1,4 +1,6 @@
+// server/src/routes/customer.routes.js
 import { Router } from "express";
+import mongoose from "mongoose";
 import Customer from "../models/Customer.model.js";
 
 const router = Router();
@@ -7,7 +9,8 @@ const router = Router();
 router.post("/", async (req, res, next) => {
   try {
     const { name, phone } = req.body;
-    if (!name || !phone) return res.status(400).json({ message: "name & phone required" });
+    if (!name || !phone)
+      return res.status(400).json({ message: "name & phone required" });
 
     const exists = await Customer.findOne({ phone });
     if (exists) return res.status(409).json({ message: "Phone already exists" });
@@ -34,6 +37,26 @@ router.get("/", async (req, res, next) => {
 
     const customers = await Customer.find(filter).sort({ createdAt: -1 });
     res.json(customers);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// ✅ get single customer by id (for history page)
+router.get("/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid customerId" });
+    }
+
+    const customer = await Customer.findById(id);
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    return res.json(customer);
   } catch (e) {
     next(e);
   }
