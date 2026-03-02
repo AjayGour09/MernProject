@@ -56,6 +56,7 @@ export default function CustomerDetails() {
 
   const sendReminder = () => {
     if (!customer?.phone) return alert("Phone missing");
+
     const amount = Number(customer?.balance || 0);
     if (!Number.isFinite(amount) || amount <= 0) return alert("No pending baki");
 
@@ -63,7 +64,10 @@ export default function CustomerDetails() {
     if (phone10.length !== 10) return alert("Invalid phone number");
 
     const msg = `Namaste ${customer.name || "Customer"} ji,\n\nAapka ₹${amount} baki hai.\nKripya payment kar dein.\n\n- Smart Kirana`;
-    window.open(`https://wa.me/91${phone10}?text=${encodeURIComponent(msg)}`, "_blank");
+    window.open(
+      `https://wa.me/91${phone10}?text=${encodeURIComponent(msg)}`,
+      "_blank"
+    );
   };
 
   return (
@@ -103,9 +107,10 @@ export default function CustomerDetails() {
             </div>
           </div>
 
+          {/* ✅ AUTO-SELECT on Khata using query param */}
           <div className="mt-3 grid grid-cols-2 gap-3">
             <Link
-              to="/khata"
+              to={`/khata?customerId=${id}`}
               className="rounded-2xl bg-black py-3 text-center font-semibold text-white active:scale-[0.99]"
             >
               📒 Add Entry
@@ -139,7 +144,10 @@ export default function CustomerDetails() {
           {loading ? <p className="text-gray-600">Loading...</p> : null}
 
           {filtered.map((t) => (
-            <div key={t._id} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+            <div
+              key={t._id}
+              className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5"
+            >
               <div className="flex items-center justify-between">
                 <div className="text-sm font-bold">
                   {t.type === "UDAAR" ? "➕ Udhaar" : "✅ Payment"}
@@ -150,6 +158,31 @@ export default function CustomerDetails() {
               <div className="mt-1 text-xs text-gray-500">
                 {new Date(t.createdAt).toLocaleString()}
               </div>
+
+              {/* ✅ Items show */}
+              {Array.isArray(t.items) && t.items.length > 0 ? (
+                <div className="mt-3 rounded-2xl border p-3">
+                  <div className="text-xs font-bold text-gray-700">Items</div>
+
+                  <div className="mt-2 space-y-1">
+                    {t.items.map((it, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <div className="text-gray-800">
+                          {it.name} × {it.qty}
+                          <span className="text-xs text-gray-500">
+                            {" "}
+                            (₹{it.price}/unit)
+                          </span>
+                        </div>
+                        <div className="font-semibold">₹{it.total}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
               {t.note ? (
                 <div className="mt-2 text-sm text-gray-700">{t.note}</div>

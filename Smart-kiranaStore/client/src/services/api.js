@@ -10,7 +10,11 @@ async function parseError(res) {
 }
 
 export async function apiGet(path) {
-  const res = await fetch(`${BASE_URL}${path}`);
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "GET",
+    credentials: "include", // ✅ IMPORTANT
+  });
+
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();
 }
@@ -19,8 +23,10 @@ export async function apiPost(path, body) {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include", // ✅ IMPORTANT
     body: JSON.stringify(body),
   });
+
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();
 }

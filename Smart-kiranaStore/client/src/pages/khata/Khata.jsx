@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Container from "../../components/Container";
 import BottomNav from "../../components/BottomNav";
 import { apiGet, apiPost } from "../../services/api";
 
 export default function Khata() {
+  const [params] = useSearchParams();
+
   const [customers, setCustomers] = useState([]);
   const [selectedId, setSelectedId] = useState("");
 
@@ -14,7 +17,7 @@ export default function Khata() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  // ✅ NEW: Items for Udhaar
+  // ✅ Items for Udhaar
   const [items, setItems] = useState([]);
 
   const selectedCustomer = useMemo(
@@ -32,7 +35,14 @@ export default function Khata() {
     try {
       const data = await apiGet("/customers?search=");
       setCustomers(data);
-      if (!selectedId && data.length) setSelectedId(data[0]._id);
+
+      // ✅ auto select from query param if present
+      const qp = params.get("customerId");
+      if (qp && data.some((c) => c._id === qp)) {
+        setSelectedId(qp);
+      } else if (!selectedId && data.length) {
+        setSelectedId(data[0]._id);
+      }
     } catch (e) {
       setErr(e.message);
     }
@@ -78,7 +88,8 @@ export default function Khata() {
 
       const qty = Number(it.qty || 0);
       const price = Number(it.price || 0);
-      it.total = (Number.isFinite(qty) ? qty : 0) * (Number.isFinite(price) ? price : 0);
+      it.total =
+        (Number.isFinite(qty) ? qty : 0) * (Number.isFinite(price) ? price : 0);
 
       copy[index] = it;
       return copy;
@@ -102,7 +113,8 @@ export default function Khata() {
     console.log("[Khata] PAYMENT", { selectedId, amt });
 
     if (!selectedId) return setErr("Customer select karo");
-    if (!Number.isFinite(amt) || amt <= 0) return setErr("Amount > 0 hona chahiye");
+    if (!Number.isFinite(amt) || amt <= 0)
+      return setErr("Amount > 0 hona chahiye");
 
     try {
       await apiPost("/transactions", {
@@ -110,7 +122,7 @@ export default function Khata() {
         type: "PAYMENT",
         amount: amt,
         note: note.trim(),
-        items: [], // payment me items empty
+        items: [],
       });
 
       await loadCustomers();
@@ -129,7 +141,6 @@ export default function Khata() {
     if (!selectedId) return setErr("Customer select karo");
     if (items.length === 0) return setErr("Kam se kam 1 item add karo");
 
-    // Validate items
     const clean = items
       .map((it) => ({
         name: String(it.name || "").trim(),
@@ -163,7 +174,8 @@ export default function Khata() {
 
   const openWhatsapp = () => {
     if (!selectedCustomer) return;
-    const msg = `Namaste! Aapka Kirana Store me ₹${selectedCustomer.balance || 0} baki hai. Kripya jama kar dein.`;
+    const baki = Number(selectedCustomer.balance || 0);
+    const msg = `Namaste! Aapka Kirana Store me ₹${baki} baki hai. Kripya jama kar dein.`;
     const phone = String(selectedCustomer.phone || "").replace(/\D/g, "").slice(-10);
     const url = `https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`;
     window.open(url, "_blank");
@@ -332,7 +344,6 @@ export default function Khata() {
                 {new Date(t.createdAt).toLocaleString()}
               </div>
 
-              {/* ✅ show items if present */}
               {t.items?.length ? (
                 <div className="mt-3 rounded-2xl border p-3">
                   <div className="text-xs font-bold text-gray-700">Items</div>
@@ -349,9 +360,7 @@ export default function Khata() {
                 </div>
               ) : null}
 
-              {t.note ? (
-                <div className="mt-2 text-sm text-gray-700">{t.note}</div>
-              ) : null}
+              {t.note ? <div className="mt-2 text-sm text-gray-700">{t.note}</div> : null}
             </div>
           ))}
 
