@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import Container from "../../components/Container";
 import BottomNav from "../../components/BottomNav";
 import { apiGet } from "../../services/api";
+import { QRCodeCanvas } from "qrcode.react";
 
 function Pill({ active, onClick, children }) {
   return (
@@ -18,6 +19,31 @@ function Pill({ active, onClick, children }) {
   );
 }
 
+function Modal({ open, onClose, title, children }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50">
+      <button
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40"
+      />
+      <div className="absolute left-1/2 top-1/2 w-[92%] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-4 shadow-xl ring-1 ring-black/10">
+        <div className="flex items-start justify-between gap-3">
+          <div className="text-base font-extrabold">{title}</div>
+          <button
+            onClick={onClose}
+            className="rounded-xl border bg-white px-3 py-2 text-sm font-semibold"
+          >
+            ✖
+          </button>
+        </div>
+        <div className="mt-3">{children}</div>
+      </div>
+    </div>
+  );
+}
+
 export default function CustomerDetails() {
   const { id } = useParams();
 
@@ -26,6 +52,9 @@ export default function CustomerDetails() {
   const [filter, setFilter] = useState("ALL"); // ALL | UDAAR | PAYMENT
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+
+  // ✅ QR modal
+  const [qrOpen, setQrOpen] = useState(false);
 
   const filtered = useMemo(() => {
     if (filter === "ALL") return ledger;
@@ -41,7 +70,7 @@ export default function CustomerDetails() {
         apiGet(`/transactions/${id}`),
       ]);
       setCustomer(c);
-      setLedger(tx);
+      setLedger(Array.isArray(tx) ? tx : []);
     } catch (e) {
       setErr(e.message || "Failed to load");
     } finally {
@@ -64,11 +93,17 @@ export default function CustomerDetails() {
     if (phone10.length !== 10) return alert("Invalid phone number");
 
     const msg = `Namaste ${customer.name || "Customer"} ji,\n\nAapka ₹${amount} baki hai.\nKripya payment kar dein.\n\n- Smart Kirana`;
+
     window.open(
       `https://wa.me/91${phone10}?text=${encodeURIComponent(msg)}`,
       "_blank"
     );
   };
+
+  // ✅ QR contains link of this customer
+  const qrLink = useMemo(() => {
+    return `${window.location.origin}/customers/${id}`;
+  }, [id]);
 
   return (
     <>
@@ -107,7 +142,7 @@ export default function CustomerDetails() {
             </div>
           </div>
 
-          {/* ✅ AUTO-SELECT on Khata using query param */}
+          {/* Actions row 1 */}
           <div className="mt-3 grid grid-cols-2 gap-3">
             <Link
               to={`/khata?customerId=${id}`}
@@ -123,6 +158,23 @@ export default function CustomerDetails() {
             >
               📲 WhatsApp
             </button>
+          </div>
+
+          {/* ✅ Actions row 2: QR + Back */}
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setQrOpen(true)}
+              className="rounded-2xl border py-3 font-semibold active:scale-[0.99]"
+            >
+              🔳 Show QR
+            </button>
+
+            <Link
+              to="/customers"
+              className="rounded-2xl border py-3 text-center font-semibold active:scale-[0.99]"
+            >
+              ← Back
+            </Link>
           </div>
         </div>
 
@@ -159,7 +211,6 @@ export default function CustomerDetails() {
                 {new Date(t.createdAt).toLocaleString()}
               </div>
 
-              {/* ✅ Items show */}
               {Array.isArray(t.items) && t.items.length > 0 ? (
                 <div className="mt-3 rounded-2xl border p-3">
                   <div className="text-xs font-bold text-gray-700">Items</div>
@@ -197,6 +248,37 @@ export default function CustomerDetails() {
           ) : null}
         </div>
       </Container>
+
+      {/* ✅ QR Modal */}
+      <Modal
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        title={`QR: ${customer?.name || ""}`}
+      >
+        <div className="flex flex-col items-center">
+          <div className="rounded-2xl border bg-white p-3">
+            <QRCodeCanvas value={qrLink || " "} size={220} includeMargin />
+          </div>
+
+          <div className="mt-3 w-full rounded-2xl border bg-gray-50 p-3 text-xs text-gray-700 break-all">
+            {qrLink}
+          </div>
+
+          <button
+            onClick={() => {
+              navigator.clipboard?.writeText(qrLink);
+              alert("Link copied ✅");
+            }}
+            className="mt-3 w-full rounded-2xl bg-black py-3 font-semibold text-white active:scale-[0.99]"
+          >
+            📋 Copy Link
+          </button>
+
+          <div className="mt-2 text-xs text-gray-500 text-center">
+            Scan karo → customer page open ho jayega.
+          </div>
+        </div>
+      </Modal>
 
       <BottomNav />
     </>
