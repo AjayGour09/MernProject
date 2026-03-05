@@ -5,9 +5,10 @@ import { VscDebugConsole } from "react-icons/vsc";
 import { CiBitcoin } from "react-icons/ci";
 
 const CreateTicket = () => {
+
   const ticketTopics = [
     {
-      icon: <Bs0Circle className="me-2 mb-1" />,
+      icon: <Bs0Circle size={22} />,
       title: "Account Opening",
       items: [
         "Online account opening",
@@ -20,7 +21,7 @@ const CreateTicket = () => {
       ],
     },
     {
-      icon: <BsAndroid2 className="me-2 mb-1" />,
+      icon: <BsAndroid2 size={22} />,
       title: "Your Zerodha Account",
       items: [
         "Login Credentials",
@@ -33,7 +34,7 @@ const CreateTicket = () => {
       ],
     },
     {
-      icon: <BsAlipay className="me-2 mb-1" />,
+      icon: <BsAlipay size={22} />,
       title: "Trading Platforms",
       items: [
         "Margins/Leverages, Product & Order types",
@@ -48,40 +49,84 @@ const CreateTicket = () => {
       ],
     },
     {
-      icon: <RiExchangeFundsFill className="me-2 mb-1" />,
+      icon: <RiExchangeFundsFill size={22} />,
       title: "Funds",
       items: ["Adding Funds", "Funds Withdrawal", "eMandates", "Adding Bank Account"],
     },
     {
-      icon: <VscDebugConsole className="me-2 mb-1" />,
+      icon: <VscDebugConsole size={22} />,
       title: "Reports",
       items: ["Ledger", "Portfolio", "60 Day Challenge", "IPO", "Referral Program"],
     },
     {
-      icon: <CiBitcoin className="me-2 mb-1" />,
+      icon: <CiBitcoin size={22} />,
       title: "Coin",
-      items: ["Understanding Mutual Funds", "About Coin", "Trading FAQs", "Buying & Selling", "Starting SIP", "Coin App"],
+      items: [
+        "Understanding Mutual Funds",
+        "About Coin",
+        "Trading FAQs",
+        "Buying & Selling",
+        "Starting SIP",
+        "Coin App",
+      ],
     },
   ];
 
+  const handleClick = (topic, item) => {
+    console.log("Ticket topic:", topic);
+    console.log("Selected issue:", item);
+
+    // future: open ticket form / navigate
+  };
+
   return (
-    <div className="container mt-5">
-      <h4 className="mb-4">To create a Ticket, select a relevant topic</h4>
-      <div className="row">
-        {ticketTopics.map((topic, idx) => (
-          <div key={idx} className="col-12 col-sm-6 col-md-4 mt-3">
-            <h5>
-              {topic.icon} {topic.title}
-            </h5>
-            {topic.items.map((item, i) => (
-              <p key={i} className="text-primary mb-1 hover-text cursor-pointer">
-                {item}
-              </p>
-            ))}
-          </div>
-        ))}
+    <section className="container py-5">
+
+      <div className="text-center mb-5">
+        <h3 className="fw-semibold">Create a Support Ticket</h3>
+        <p className="text-muted">
+          Select a topic related to your issue and we will help you resolve it.
+        </p>
       </div>
-    </div>
+
+      <div className="row g-4">
+
+        {ticketTopics.map((topic, idx) => (
+
+          <div key={idx} className="col-12 col-sm-6 col-lg-4">
+
+            <div
+              className="p-4 border rounded-4 shadow-sm h-100"
+              style={{ transition: "0.2s ease" }}
+            >
+
+              <h5 className="fw-semibold mb-3 d-flex align-items-center gap-2">
+                <span className="text-primary">{topic.icon}</span>
+                {topic.title}
+              </h5>
+
+              {topic.items.map((item, i) => (
+
+                <div
+                  key={i}
+                  className="text-primary mb-2"
+                  style={{ cursor: "pointer", fontSize: "14px" }}
+                  onClick={() => handleClick(topic.title, item)}
+                >
+                  {item}
+                </div>
+
+              ))}
+
+            </div>
+
+          </div>
+
+        ))}
+
+      </div>
+
+    </section>
   );
 };
 
