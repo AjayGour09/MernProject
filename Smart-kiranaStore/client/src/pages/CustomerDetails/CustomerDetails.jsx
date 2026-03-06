@@ -1,10 +1,8 @@
-// client/src/pages/CustomerDetails/CustomerDetails.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Container from "../../components/Container";
 import BottomNav from "../../components/BottomNav";
 import { apiGet } from "../../services/api";
-import { QRCodeCanvas } from "qrcode.react";
 
 function Pill({ active, onClick, children }) {
   return (
@@ -19,29 +17,11 @@ function Pill({ active, onClick, children }) {
   );
 }
 
-function Modal({ open, onClose, title, children }) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50">
-      <button
-        aria-label="Close"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/40"
-      />
-      <div className="absolute left-1/2 top-1/2 w-[92%] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-4 shadow-xl ring-1 ring-black/10">
-        <div className="flex items-start justify-between gap-3">
-          <div className="text-base font-extrabold">{title}</div>
-          <button
-            onClick={onClose}
-            className="rounded-xl border bg-white px-3 py-2 text-sm font-semibold"
-          >
-            ✖
-          </button>
-        </div>
-        <div className="mt-3">{children}</div>
-      </div>
-    </div>
-  );
+function formatBalance(balance) {
+  const b = Number(balance || 0);
+  if (b > 0) return { label: "Baki", value: `₹${b}`, cls: "text-red-700" };
+  if (b < 0) return { label: "Advance", value: `₹${Math.abs(b)}`, cls: "text-green-700" };
+  return { label: "Status", value: "Clear", cls: "text-gray-700" };
 }
 
 export default function CustomerDetails() {
@@ -49,12 +29,9 @@ export default function CustomerDetails() {
 
   const [customer, setCustomer] = useState(null);
   const [ledger, setLedger] = useState([]);
-  const [filter, setFilter] = useState("ALL"); // ALL | UDAAR | PAYMENT
+  const [filter, setFilter] = useState("ALL");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-
-  // ✅ QR modal
-  const [qrOpen, setQrOpen] = useState(false);
 
   const filtered = useMemo(() => {
     if (filter === "ALL") return ledger;
@@ -86,13 +63,20 @@ export default function CustomerDetails() {
   const sendReminder = () => {
     if (!customer?.phone) return alert("Phone missing");
 
-    const amount = Number(customer?.balance || 0);
-    if (!Number.isFinite(amount) || amount <= 0) return alert("No pending baki");
-
+    const bal = Number(customer?.balance || 0);
     const phone10 = String(customer.phone).replace(/\D/g, "").slice(-10);
     if (phone10.length !== 10) return alert("Invalid phone number");
 
-    const msg = `Namaste ${customer.name || "Customer"} ji,\n\nAapka ₹${amount} baki hai.\nKripya payment kar dein.\n\n- Smart Kirana`;
+    let msg = "";
+    if (bal > 0) {
+      msg = `Namaste ${customer.name || "Customer"} ji,\n\nAapka ₹${bal} baki hai.\nKripya payment kar dein.\n\n- Smart Kirana`;
+    } else if (bal < 0) {
+      msg = `Namaste ${customer.name || "Customer"} ji,\n\nAapke account me ₹${Math.abs(
+        bal
+      )} advance jama hai.\nAgli kharidari me adjust ho jayega.\n\n- Smart Kirana`;
+    } else {
+      msg = `Namaste ${customer.name || "Customer"} ji,\n\nAapka account clear hai.\n\n- Smart Kirana`;
+    }
 
     window.open(
       `https://wa.me/91${phone10}?text=${encodeURIComponent(msg)}`,
@@ -100,10 +84,7 @@ export default function CustomerDetails() {
     );
   };
 
-  // ✅ QR contains link of this customer
-  const qrLink = useMemo(() => {
-    return `${window.location.origin}/customers/${id}`;
-  }, [id]);
+  const balanceUI = formatBalance(customer?.balance || 0);
 
   return (
     <>
@@ -124,7 +105,6 @@ export default function CustomerDetails() {
           </div>
         ) : null}
 
-        {/* Customer card */}
         <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -135,14 +115,13 @@ export default function CustomerDetails() {
             </div>
 
             <div className="text-right">
-              <div className="text-xs text-gray-500">Baki</div>
-              <div className="text-2xl font-extrabold">
-                ₹{customer?.balance ?? 0}
+              <div className="text-xs text-gray-500">{balanceUI.label}</div>
+              <div className={`text-2xl font-extrabold ${balanceUI.cls}`}>
+                {balanceUI.value}
               </div>
             </div>
           </div>
 
-          {/* Actions row 1 */}
           <div className="mt-3 grid grid-cols-2 gap-3">
             <Link
               to={`/khata?customerId=${id}`}
@@ -154,31 +133,12 @@ export default function CustomerDetails() {
             <button
               onClick={sendReminder}
               className="rounded-2xl bg-green-600 py-3 font-semibold text-white active:scale-[0.99]"
-              disabled={!customer || (customer?.balance ?? 0) <= 0}
             >
               📲 WhatsApp
             </button>
           </div>
-
-          {/* ✅ Actions row 2: QR + Back */}
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <button
-              onClick={() => setQrOpen(true)}
-              className="rounded-2xl border py-3 font-semibold active:scale-[0.99]"
-            >
-              🔳 Show QR
-            </button>
-
-            <Link
-              to="/customers"
-              className="rounded-2xl border py-3 text-center font-semibold active:scale-[0.99]"
-            >
-              ← Back
-            </Link>
-          </div>
         </div>
 
-        {/* Filters */}
         <div className="mt-4 flex gap-2">
           <Pill active={filter === "ALL"} onClick={() => setFilter("ALL")}>
             All
@@ -191,7 +151,6 @@ export default function CustomerDetails() {
           </Pill>
         </div>
 
-        {/* Ledger */}
         <div className="mt-4 space-y-3">
           {loading ? <p className="text-gray-600">Loading...</p> : null}
 
@@ -248,37 +207,6 @@ export default function CustomerDetails() {
           ) : null}
         </div>
       </Container>
-
-      {/* ✅ QR Modal */}
-      <Modal
-        open={qrOpen}
-        onClose={() => setQrOpen(false)}
-        title={`QR: ${customer?.name || ""}`}
-      >
-        <div className="flex flex-col items-center">
-          <div className="rounded-2xl border bg-white p-3">
-            <QRCodeCanvas value={qrLink || " "} size={220} includeMargin />
-          </div>
-
-          <div className="mt-3 w-full rounded-2xl border bg-gray-50 p-3 text-xs text-gray-700 break-all">
-            {qrLink}
-          </div>
-
-          <button
-            onClick={() => {
-              navigator.clipboard?.writeText(qrLink);
-              alert("Link copied ✅");
-            }}
-            className="mt-3 w-full rounded-2xl bg-black py-3 font-semibold text-white active:scale-[0.99]"
-          >
-            📋 Copy Link
-          </button>
-
-          <div className="mt-2 text-xs text-gray-500 text-center">
-            Scan karo → customer page open ho jayega.
-          </div>
-        </div>
-      </Modal>
 
       <BottomNav />
     </>

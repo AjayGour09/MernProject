@@ -1,8 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Container from "../../components/Container";
 import BottomNav from "../../components/BottomNav";
 import { apiGet, apiPost } from "../../services/api";
+
+function QuickBtn({ onClick, children, dark = false }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-xl px-3 py-2 text-sm font-semibold active:scale-[0.99] transition ${
+        dark ? "bg-black text-white" : "border bg-white text-gray-900"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function money(v) {
+  return `₹${Math.abs(Number(v || 0))}`;
+}
 
 export default function Khata() {
   const [params] = useSearchParams();
@@ -10,14 +27,13 @@ export default function Khata() {
   const [customers, setCustomers] = useState([]);
   const [selectedId, setSelectedId] = useState("");
 
-  const [amount, setAmount] = useState(""); // for PAYMENT
+  const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
 
   const [ledger, setLedger] = useState([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  // ✅ Items for Udhaar
   const [items, setItems] = useState([]);
 
   const selectedCustomer = useMemo(
@@ -25,18 +41,18 @@ export default function Khata() {
     [customers, selectedId]
   );
 
-  // ✅ total from items
   const itemsTotal = useMemo(() => {
     return items.reduce((sum, it) => sum + Number(it.total || 0), 0);
   }, [items]);
+
+  const lastEntry = useMemo(() => ledger?.[0] || null, [ledger]);
 
   const loadCustomers = async () => {
     setErr("");
     try {
       const data = await apiGet("/customers?search=");
-      setCustomers(data);
+      setCustomers(Array.isArray(data) ? data : []);
 
-      // ✅ auto select from query param if present
       const qp = params.get("customerId");
       if (qp && data.some((c) => c._id === qp)) {
         setSelectedId(qp);
@@ -54,7 +70,7 @@ export default function Khata() {
     setLoading(true);
     try {
       const data = await apiGet(`/transactions/${customerId}`);
-      setLedger(data);
+      setLedger(Array.isArray(data) ? data : []);
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -72,7 +88,6 @@ export default function Khata() {
     // eslint-disable-next-line
   }, [selectedId]);
 
-  // ✅ item handlers
   const addItem = () => {
     setItems((prev) => [...prev, { name: "", qty: 1, price: 0, total: 0 }]);
   };
@@ -110,8 +125,6 @@ export default function Khata() {
     setErr("");
     const amt = Number(amount);
 
-    console.log("[Khata] PAYMENT", { selectedId, amt });
-
     if (!selectedId) return setErr("Customer select karo");
     if (!Number.isFinite(amt) || amt <= 0)
       return setErr("Amount > 0 hona chahiye");
@@ -136,8 +149,6 @@ export default function Khata() {
   const submitUdhaar = async () => {
     setErr("");
 
-    console.log("[Khata] UDAAR", { selectedId, items, itemsTotal });
-
     if (!selectedId) return setErr("Customer select karo");
     if (items.length === 0) return setErr("Kam se kam 1 item add karo");
 
@@ -153,7 +164,8 @@ export default function Khata() {
     if (clean.length === 0) return setErr("Items valid nahi hain");
 
     const total = clean.reduce((s, it) => s + (Number(it.total) || 0), 0);
-    if (!Number.isFinite(total) || total <= 0) return setErr("Total amount valid nahi");
+    if (!Number.isFinite(total) || total <= 0)
+      return setErr("Total amount valid nahi");
 
     try {
       await apiPost("/transactions", {
@@ -174,17 +186,52 @@ export default function Khata() {
 
   const openWhatsapp = () => {
     if (!selectedCustomer) return;
-    const baki = Number(selectedCustomer.balance || 0);
-    const msg = `Namaste! Aapka Kirana Store me ₹${baki} baki hai. Kripya jama kar dein.`;
-    const phone = String(selectedCustomer.phone || "").replace(/\D/g, "").slice(-10);
+
+    const bal = Number(selectedCustomer.balance || 0);
+    let msg = "";
+
+    if (bal > 0) {
+      msg = `Namaste ${selectedCustomer.name || "Customer"} ji,\n\nAapka Kirana Store me ₹${bal} baki hai.\nKripya jama kar dein.\n\n- Smart Kirana`;
+    } else if (bal < 0) {
+      msg = `Namaste ${selectedCustomer.name || "Customer"} ji,\n\nAapke account me ₹${Math.abs(
+        bal
+      )} advance jama hai.\nAgli kharidari me adjust ho jayega.\n\n- Smart Kirana`;
+    } else {
+      msg = `Namaste ${selectedCustomer.name || "Customer"} ji,\n\nAapka account clear hai.\n\n- Smart Kirana`;
+    }
+
+    const phone = String(selectedCustomer.phone || "")
+      .replace(/\D/g, "")
+      .slice(-10);
     const url = `https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`;
     window.open(url, "_blank");
   };
 
+  const applyQuickPayment = (val) => {
+    const current = Number(amount || 0);
+    setAmount(String(current + val));
+  };
+
+  const addQuickUdhaarItem = (amt) => {
+    setItems((prev) => [
+      ...prev,
+      {
+        name: `Quick Item ${amt}`,
+        qty: 1,
+        price: amt,
+        total: amt,
+      },
+    ]);
+  };
+
+  const balance = Number(selectedCustomer?.balance || 0);
+  const isBaki = balance > 0;
+  const isAdvance = balance < 0;
+
   return (
     <>
       <Container title="Khata (Udhaar)">
-        <div className="rounded-2xl bg-white p-4 shadow">
+        <div className="rounded-2xl bg-white p-4 shadow ring-1 ring-black/5">
           <label className="text-sm font-semibold text-gray-700">Customer</label>
 
           <select
@@ -200,24 +247,76 @@ export default function Khata() {
           </select>
 
           <div className="mt-4 rounded-2xl border p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-xs text-gray-500">Total Baki</div>
-                <div className="text-2xl font-extrabold">
-                  ₹{selectedCustomer?.balance ?? 0}
+                <div className="text-xs text-gray-500">
+                  {isBaki ? "Total Baki" : isAdvance ? "Advance Jama" : "Account"}
                 </div>
+
+                <div
+                  className={`text-4xl font-extrabold ${
+                    isBaki
+                      ? "text-red-700"
+                      : isAdvance
+                      ? "text-green-700"
+                      : "text-gray-900"
+                  }`}
+                >
+                  {balance === 0 ? "Clear" : money(balance)}
+                </div>
+
+                {lastEntry ? (
+                  <div className="mt-2 text-xs text-gray-500">
+                    Last:{" "}
+                    <b>
+                      {lastEntry.type === "UDAAR" ? "Udhaar" : "Payment"}{" "}
+                      ₹{lastEntry.amount}
+                    </b>
+                  </div>
+                ) : (
+                  <div className="mt-2 text-xs text-gray-500">
+                    No previous entry
+                  </div>
+                )}
               </div>
 
-              <button
-                onClick={openWhatsapp}
-                className="rounded-2xl border px-4 py-2 text-sm font-semibold active:scale-[0.99]"
-                disabled={!selectedCustomer}
-              >
-                📲 WhatsApp
-              </button>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={openWhatsapp}
+                  className="rounded-2xl border px-4 py-3 text-sm font-semibold active:scale-[0.99]"
+                  disabled={!selectedCustomer}
+                >
+                  📲 WhatsApp
+                </button>
+
+                {selectedId ? (
+                  <Link
+                    to={`/customers/${selectedId}`}
+                    className="rounded-2xl border px-4 py-3 text-center text-sm font-semibold active:scale-[0.99]"
+                  >
+                    🧾 History
+                  </Link>
+                ) : null}
+              </div>
             </div>
 
-            {/* ✅ UDAAR ITEMS */}
+            {/* Quick Udhaar */}
+            <div className="mt-4 rounded-2xl border p-4">
+              <div className="text-sm font-bold">⚡ Quick Udhaar</div>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <QuickBtn onClick={() => addQuickUdhaarItem(10)} dark>+₹10</QuickBtn>
+                <QuickBtn onClick={() => addQuickUdhaarItem(20)} dark>+₹20</QuickBtn>
+                <QuickBtn onClick={() => addQuickUdhaarItem(50)} dark>+₹50</QuickBtn>
+                <QuickBtn onClick={() => addQuickUdhaarItem(100)}>+₹100</QuickBtn>
+                <QuickBtn onClick={() => addQuickUdhaarItem(200)}>+₹200</QuickBtn>
+                <QuickBtn onClick={() => addQuickUdhaarItem(500)}>+₹500</QuickBtn>
+              </div>
+              <div className="mt-2 text-xs text-gray-500">
+                Ye quick amount item list me add ho jayega.
+              </div>
+            </div>
+
+            {/* Items */}
             <div className="mt-4 rounded-2xl border p-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-bold">Items (Udhaar)</div>
@@ -285,7 +384,7 @@ export default function Khata() {
 
               <div className="mt-3 rounded-2xl bg-gray-50 p-3 text-right">
                 <div className="text-xs text-gray-500">Udhaar Total</div>
-                <div className="text-2xl font-extrabold">₹{itemsTotal}</div>
+                <div className="text-3xl font-extrabold">₹{itemsTotal}</div>
               </div>
 
               <button
@@ -296,22 +395,37 @@ export default function Khata() {
               </button>
             </div>
 
-            {/* ✅ PAYMENT */}
+            {/* Payment */}
             <div className="mt-4 rounded-2xl border p-4">
               <div className="text-sm font-bold">Payment (Paisa Mila)</div>
+
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                <QuickBtn onClick={() => applyQuickPayment(50)}>50</QuickBtn>
+                <QuickBtn onClick={() => applyQuickPayment(100)}>100</QuickBtn>
+                <QuickBtn onClick={() => applyQuickPayment(200)}>200</QuickBtn>
+                <QuickBtn onClick={() => applyQuickPayment(500)}>500</QuickBtn>
+              </div>
+
               <input
                 className="mt-3 w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
                 placeholder="Payment Amount (₹)"
                 inputMode="numeric"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e) =>
+                  setAmount(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
               />
+
               <button
                 onClick={submitPayment}
                 className="mt-3 w-full rounded-2xl border py-3 font-semibold active:scale-[0.99]"
               >
                 ✅ Paisa Mila Save
               </button>
+
+              <div className="mt-2 text-xs text-gray-500">
+                Extra payment aayega to advance jama me save ho jayega.
+              </div>
             </div>
 
             <input
@@ -326,13 +440,13 @@ export default function Khata() {
           </div>
         </div>
 
-        {/* Ledger */}
+        {/* Recent entries */}
         <div className="mt-4 space-y-3">
           <div className="text-sm font-bold text-gray-800">Recent Entries</div>
           {loading ? <p className="text-gray-600">Loading...</p> : null}
 
-          {ledger.map((t) => (
-            <div key={t._id} className="rounded-2xl bg-white p-4 shadow">
+          {ledger.slice(0, 3).map((t) => (
+            <div key={t._id} className="rounded-2xl bg-white p-4 shadow ring-1 ring-black/5">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-bold">
                   {t.type === "UDAAR" ? "➕ Udhaar" : "✅ Payment"}
@@ -348,7 +462,7 @@ export default function Khata() {
                 <div className="mt-3 rounded-2xl border p-3">
                   <div className="text-xs font-bold text-gray-700">Items</div>
                   <div className="mt-2 space-y-1">
-                    {t.items.map((it, idx) => (
+                    {t.items.slice(0, 3).map((it, idx) => (
                       <div key={idx} className="flex justify-between text-sm">
                         <div className="text-gray-800">
                           {it.name} × {it.qty}
@@ -360,7 +474,9 @@ export default function Khata() {
                 </div>
               ) : null}
 
-              {t.note ? <div className="mt-2 text-sm text-gray-700">{t.note}</div> : null}
+              {t.note ? (
+                <div className="mt-2 text-sm text-gray-700">{t.note}</div>
+              ) : null}
             </div>
           ))}
 

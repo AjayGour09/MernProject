@@ -2,22 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import Container from "../../components/Container";
 import BottomNav from "../../components/BottomNav";
 import { SalesAPI } from "../../services/sales.api";
-import { useSearchParams } from "react-router-dom";
-
-function todayStrClient() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 
 function Pill({ active, onClick, children }) {
   return (
     <button
       onClick={onClick}
-      className={`rounded-xl px-3 py-2 text-sm font-semibold active:scale-[0.99] transition ${
-        active ? "bg-black text-white" : "border bg-white text-gray-900"
+      className={`rounded-xl px-4 py-3 text-sm font-semibold active:scale-[0.99] transition ${
+        active ? "bg-white text-black" : "bg-white/90 text-black"
       }`}
     >
       {children}
@@ -25,282 +16,284 @@ function Pill({ active, onClick, children }) {
   );
 }
 
-export default function Sales() {
-  const [params] = useSearchParams();
+function QuickBtn({ onClick, children }) {
+  return (
+    <button
+      onClick={onClick}
+      className="rounded-xl border bg-white px-3 py-2 text-sm font-semibold active:scale-[0.99] transition"
+    >
+      {children}
+    </button>
+  );
+}
 
-  const [date, setDate] = useState(todayStrClient());
+function money(v) {
+  return `₹ ${Number(v || 0)}`;
+}
+
+function todayStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export default function Sales() {
+  const [range, setRange] = useState(30); // 7 | 30 | 90
+  const [date, setDate] = useState(todayStr());
   const [cash, setCash] = useState("");
   const [upi, setUpi] = useState("");
   const [note, setNote] = useState("");
+
+  const [summary, setSummary] = useState({
+    total: 0,
+    cash: 0,
+    upi: 0,
+  });
+
   const [list, setList] = useState([]);
-
-  const [month, setMonth] = useState({ total: 0, cash: 0, upi: 0, days: 30 });
-  const [days, setDays] = useState(30);
-
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const total = useMemo(() => {
-    const c = Number(cash || 0);
-    const u = Number(upi || 0);
-    return (Number.isFinite(c) ? c : 0) + (Number.isFinite(u) ? u : 0);
+    return Number(cash || 0) + Number(upi || 0);
   }, [cash, upi]);
 
-  const loadToday = async () => {
+  const load = async () => {
     setErr("");
-    try {
-      const d = await SalesAPI.today();
-      setDate(d.date);
-      setCash(String(d.cash ?? 0));
-      setUpi(String(d.upi ?? 0));
-      setNote(d.note || "");
-    } catch (e) {
-      setErr(e.message);
-    }
-  };
-
-  // ✅ Load any specific date using existing list endpoint (no backend change)
-  const loadByDate = async (dateStr) => {
-    setErr("");
-    try {
-      const data = await SalesAPI.list(60); // enough to find requested day
-      const found = (data || []).find((x) => x.date === dateStr);
-
-      if (found) {
-        setDate(found.date);
-        setCash(String(found.cash ?? 0));
-        setUpi(String(found.upi ?? 0));
-        setNote(found.note || "");
-      } else {
-        // If not found in DB, allow user to create entry for that date
-        setDate(dateStr);
-        setCash("0");
-        setUpi("0");
-        setNote("");
-      }
-    } catch (e) {
-      setErr(e.message);
-    }
-  };
-
-  const loadList = async () => {
     setLoading(true);
-    setErr("");
+
     try {
-      const data = await SalesAPI.list(10);
-      setList(data);
+      const [days, monthSummary] = await Promise.all([
+        SalesAPI.list(range),
+        SalesAPI.month(range),
+      ]);
+
+      setList(Array.isArray(days) ? days : []);
+
+      setSummary(
+        monthSummary || {
+          total: 0,
+          cash: 0,
+          upi: 0,
+        }
+      );
     } catch (e) {
-      setErr(e.message);
+      setErr(e.message || "Load failed");
     } finally {
       setLoading(false);
     }
   };
 
-  const loadMonth = async (d = days) => {
-    try {
-      const res = await SalesAPI.month(d);
-      setMonth(res);
-    } catch (e) {
-      console.log("Month load error:", e.message);
-    }
-  };
-
   useEffect(() => {
-    const qDate = params.get("date");
-    if (qDate && /^\d{4}-\d{2}-\d{2}$/.test(qDate)) {
-      loadByDate(qDate);
-    } else {
-      loadToday();
-    }
-
-    loadList();
-    loadMonth(30);
+    load();
     // eslint-disable-next-line
-  }, []);
+  }, [range]);
 
-  const save = async () => {
+  const addCash = (v) => {
+    setCash(String(Number(cash || 0) + v));
+  };
+
+  const addUpi = (v) => {
+    setUpi(String(Number(upi || 0) + v));
+  };
+
+  const saveSales = async () => {
     setErr("");
+
     const c = Number(cash || 0);
     const u = Number(upi || 0);
 
-    console.log("[Sales] save", { date, cash: c, upi: u });
+    if (!date) return setErr("Date required");
+    if (!Number.isFinite(c) || c < 0) return setErr("Cash invalid");
+    if (!Number.isFinite(u) || u < 0) return setErr("UPI invalid");
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return setErr("Valid date select karo");
-    if (!Number.isFinite(c) || c < 0) return setErr("Cash >= 0");
-    if (!Number.isFinite(u) || u < 0) return setErr("UPI >= 0");
-
-    try {
-      await SalesAPI.save({ date, cash: c, upi: u, note: note.trim() });
-      await loadList();
-      await loadMonth(days);
-    } catch (e) {
-      setErr(e.message);
+    // optional safety
+    if (c > 10000000 || u > 10000000) {
+      return setErr("Value too large");
     }
-  };
 
-  const addCash = (x) => {
-    const c = Number(cash || 0);
-    setCash(String(c + x));
-  };
-  const addUpi = (x) => {
-    const u = Number(upi || 0);
-    setUpi(String(u + x));
+    setSaving(true);
+    try {
+      await SalesAPI.save({
+        date,
+        cash: c,
+        upi: u,
+        note: note.trim(),
+      });
+
+      // ✅ form clear after save
+      setCash("");
+      setUpi("");
+      setNote("");
+
+      // ✅ refresh summary + list
+      await load();
+
+      alert("Sales saved ✅");
+    } catch (e) {
+      setErr(e.message || "Save failed");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <>
-      <Container
-        title="Daily Sales"
-        right={
-          <button
-            onClick={() => {
-              const qDate = params.get("date");
-              if (qDate && /^\d{4}-\d{2}-\d{2}$/.test(qDate)) loadByDate(qDate);
-              else loadToday();
-
-              loadList();
-              loadMonth(days);
-            }}
-            className="rounded-xl border bg-white px-3 py-2 text-sm font-semibold active:scale-[0.99]"
-          >
-            ↻
-          </button>
-        }
-      >
-        {/* Monthly Summary */}
+      <Container title="Sales">
+        {/* Summary */}
         <div className="rounded-2xl bg-black p-5 text-white shadow-sm">
-          <div className="text-sm opacity-80">Last {days} days</div>
-          <div className="mt-1 text-3xl font-extrabold">₹ {month.total}</div>
-          <div className="mt-2 text-xs opacity-80">
-            Cash: ₹{month.cash} • UPI: ₹{month.upi}
+          <div className="text-sm opacity-80">Last {range} days</div>
+
+          <div className="mt-2 text-4xl font-extrabold">
+            {money(summary.total)}
           </div>
 
-          <div className="mt-4 flex gap-2">
-            <Pill
-              active={days === 7}
-              onClick={() => {
-                setDays(7);
-                loadMonth(7);
-              }}
-            >
+          <div className="mt-2 text-sm opacity-90">
+            Cash: {money(summary.cash)} • UPI: {money(summary.upi)}
+          </div>
+
+          <div className="mt-5 flex gap-3">
+            <Pill active={range === 7} onClick={() => setRange(7)}>
               7D
             </Pill>
-            <Pill
-              active={days === 30}
-              onClick={() => {
-                setDays(30);
-                loadMonth(30);
-              }}
-            >
+            <Pill active={range === 30} onClick={() => setRange(30)}>
               30D
             </Pill>
-            <Pill
-              active={days === 90}
-              onClick={() => {
-                setDays(90);
-                loadMonth(90);
-              }}
-            >
+            <Pill active={range === 90} onClick={() => setRange(90)}>
               90D
             </Pill>
           </div>
         </div>
 
-        {/* Entry */}
-        <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <label className="text-sm font-semibold text-gray-700">Date</label>
+        {/* Entry Form */}
+        <div className="mt-4 rounded-2xl bg-white p-4 shadow ring-1 ring-black/5">
+          <div className="text-sm font-bold text-gray-900">Date</div>
+
           <input
             type="date"
-            className="mt-2 w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
             value={date}
             onChange={(e) => setDate(e.target.value)}
+            className="mt-3 w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
           />
 
-          <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-2 gap-3">
             <div>
-              <div className="text-xs text-gray-500">Cash (₹)</div>
+              <div className="mb-2 text-sm text-gray-600">Cash (₹)</div>
               <input
-                inputMode="numeric"
-                className="mt-1 w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
                 value={cash}
-                onChange={(e) => setCash(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                placeholder="0"
+                onChange={(e) =>
+                  setCash(e.target.value.replace(/\D/g, "").slice(0, 9))
+                }
+                placeholder="Cash"
+                inputMode="numeric"
+                className="w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
               />
+
               <div className="mt-2 flex gap-2">
-                <button onClick={() => addCash(100)} className="flex-1 rounded-xl border py-2 text-xs font-semibold">
-                  +100
-                </button>
-                <button onClick={() => addCash(200)} className="flex-1 rounded-xl border py-2 text-xs font-semibold">
-                  +200
-                </button>
-                <button onClick={() => addCash(500)} className="flex-1 rounded-xl border py-2 text-xs font-semibold">
-                  +500
-                </button>
+                <QuickBtn onClick={() => addCash(100)}>+100</QuickBtn>
+                <QuickBtn onClick={() => addCash(200)}>+200</QuickBtn>
+                <QuickBtn onClick={() => addCash(500)}>+500</QuickBtn>
               </div>
             </div>
 
             <div>
-              <div className="text-xs text-gray-500">UPI (₹)</div>
+              <div className="mb-2 text-sm text-gray-600">UPI (₹)</div>
               <input
-                inputMode="numeric"
-                className="mt-1 w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
                 value={upi}
-                onChange={(e) => setUpi(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                placeholder="0"
+                onChange={(e) =>
+                  setUpi(e.target.value.replace(/\D/g, "").slice(0, 9))
+                }
+                placeholder="UPI"
+                inputMode="numeric"
+                className="w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
               />
+
               <div className="mt-2 flex gap-2">
-                <button onClick={() => addUpi(100)} className="flex-1 rounded-xl border py-2 text-xs font-semibold">
-                  +100
-                </button>
-                <button onClick={() => addUpi(200)} className="flex-1 rounded-xl border py-2 text-xs font-semibold">
-                  +200
-                </button>
-                <button onClick={() => addUpi(500)} className="flex-1 rounded-xl border py-2 text-xs font-semibold">
-                  +500
-                </button>
+                <QuickBtn onClick={() => addUpi(100)}>+100</QuickBtn>
+                <QuickBtn onClick={() => addUpi(200)}>+200</QuickBtn>
+                <QuickBtn onClick={() => addUpi(500)}>+500</QuickBtn>
               </div>
             </div>
           </div>
 
-          <div className="mt-3 rounded-2xl border p-4">
+          <div className="mt-4 rounded-2xl border bg-gray-50 p-4">
             <div className="text-xs text-gray-500">Total</div>
-            <div className="text-3xl font-extrabold">₹ {total}</div>
+            <div className="mt-1 text-4xl font-extrabold">{money(total)}</div>
           </div>
 
           <input
-            className="mt-3 w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
-            placeholder="Note (optional)"
             value={note}
             onChange={(e) => setNote(e.target.value)}
+            placeholder="Note"
             maxLength={120}
+            className="mt-4 w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
           />
 
           <button
-            onClick={save}
-            className="mt-3 w-full rounded-2xl bg-black py-3 font-semibold text-white active:scale-[0.99]"
+            onClick={saveSales}
+            disabled={saving}
+            className="mt-4 w-full rounded-2xl bg-black py-3 font-semibold text-white active:scale-[0.99] transition disabled:opacity-60"
           >
-            ✅ Save Sales
+            {saving ? "Saving..." : "✅ Save Sales"}
           </button>
 
-          {err ? <p className="mt-3 text-sm text-red-600">{err}</p> : null}
+          {err ? (
+            <div className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+              {err}
+            </div>
+          ) : null}
         </div>
 
-        {/* History */}
+        {/* Last Days */}
         <div className="mt-5">
           <div className="mb-2 text-sm font-bold text-gray-900">Last Days</div>
+
           {loading ? <p className="text-gray-600">Loading...</p> : null}
+
+          {!loading && list.length === 0 ? (
+            <div className="rounded-2xl bg-white p-4 text-gray-600 shadow ring-1 ring-black/5">
+              No sales yet.
+            </div>
+          ) : null}
 
           <div className="space-y-3">
             {list.map((d) => (
-              <div key={d._id} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+              <div
+                key={d._id || d.date}
+                className="rounded-2xl bg-white p-4 shadow ring-1 ring-black/5"
+              >
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-bold">{d.date}</div>
-                  <div className="text-lg font-extrabold">₹ {d.total}</div>
+                  <div className="text-lg font-bold text-gray-900">
+                    {d.date}
+                  </div>
+                  <div className="text-2xl font-extrabold">
+                    {money(d.total)}
+                  </div>
                 </div>
-                <div className="mt-1 text-sm text-gray-600">
-                  Cash: ₹{d.cash} • UPI: ₹{d.upi}
+
+                <div className="mt-2 text-sm text-gray-600">
+                  Cash={money(d.cash)} • UPI={money(d.upi)}
                 </div>
-                {d.note ? <div className="mt-2 text-sm">{d.note}</div> : null}
+
+                {d.note ? (
+                  <div className="mt-2 text-sm text-gray-700">{d.note}</div>
+                ) : null}
+
+                <button
+                  onClick={() => {
+                    setDate(d.date);
+                    setCash(String(d.cash || ""));
+                    setUpi(String(d.upi || ""));
+                    setNote(d.note || "");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="mt-3 rounded-xl border px-3 py-2 text-sm font-semibold active:scale-[0.99]"
+                >
+                  Edit
+                </button>
               </div>
             ))}
           </div>

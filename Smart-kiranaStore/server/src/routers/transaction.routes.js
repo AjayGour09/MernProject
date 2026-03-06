@@ -50,8 +50,8 @@ router.post("/", async (req, res, next) => {
       return res.status(404).json({ message: "Customer not found" });
     }
 
-    // ✅ Validate items only for UDAAR (PAYMENT me normally items nahi hote)
     let cleanItems = [];
+
     if (type === "UDAAR") {
       if (!Array.isArray(items)) {
         return res.status(400).json({ message: "Items must be an array" });
@@ -66,7 +66,6 @@ router.post("/", async (req, res, next) => {
         }))
         .filter((it) => it.name && Number.isFinite(it.qty) && it.qty > 0);
 
-      // Recalculate totals safely
       cleanItems = cleanItems.map((it) => {
         const price = Number.isFinite(it.price) && it.price >= 0 ? it.price : 0;
         const total = it.qty * price;
@@ -74,25 +73,19 @@ router.post("/", async (req, res, next) => {
       });
     }
 
-    // ✅ Create transaction
     const tx = await Transaction.create({
       customerId,
       type,
       amount: amt,
-      note: String(note || "").slice(0, 80),
+      note: String(note || "").slice(0, 120),
       items: cleanItems,
     });
 
-    // ✅ Update balance
+    // ✅ NEW LOGIC:
+    // positive balance = baki
+    // negative balance = advance jama
     if (type === "UDAAR") customer.balance += amt;
     else customer.balance -= amt;
-
-    // optional: block negative balance
-    if (customer.balance < 0) {
-      log.warn("Balance going negative, blocking. New balance:", customer.balance);
-      await Transaction.findByIdAndDelete(tx._id);
-      return res.status(400).json({ message: "Payment cannot be more than baki" });
-    }
 
     await customer.save();
 
