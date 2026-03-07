@@ -184,7 +184,7 @@ export default function Customers() {
           })}
 
           {!loading && list.length === 0 ? (
-            <div className="rounded-2xl bg-white p-4 text-gray-600 shadow">
+            <div className="rounded-2xl bg-white p-4 text-gray-500 shadow">
               No customers yet.
             </div>
           ) : null}
