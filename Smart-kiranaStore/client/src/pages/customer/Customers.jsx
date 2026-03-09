@@ -157,7 +157,7 @@ export default function Customers() {
                   </div>
                 </div>
 
-                <div className="mt-3 grid grid-cols-3 gap-3">
+                <div className="mt-4 grid grid-cols-3 gap-3">
                   <Link
                     to={`/customers/${c._id}`}
                     className="rounded-2xl border py-3 text-center font-semibold active:scale-[0.99]"
