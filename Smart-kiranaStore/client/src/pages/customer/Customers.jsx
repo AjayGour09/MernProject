@@ -146,7 +146,7 @@ export default function Customers() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-lg font-bold truncate">{c.name}</div>
-                    <div className="text-sm text-gray-600">{c.phone}</div>
+                    <div className="text-sm text-gray-500">{c.phone}</div>
                   </div>
 
                   <div className="text-right">
