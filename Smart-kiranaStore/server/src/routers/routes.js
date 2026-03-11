@@ -1,18 +1,18 @@
 import { Router } from "express";
-import customerRoutes from "./customer.routes.js";
-import transactionRoutes from "./transaction.routes.js";
-import stockRoutes from "./stock.routes.js";   // ✅ ADD THIS
-import summaryRoutes from "./summary.routes.js";
-import salesRoutes from "./sales.routes.js";
+import customerRoutes from "../routes/customer.routes.js";
+import transactionRoutes from "../routes/transaction.routes.js";
+import stockRoutes from "../routes/stock.routes.js";
+import salesRoutes from "../routes/sales.routes.js";
+import summaryRoutes from "../routes/summary.routes.js";
+import authRoutes from "../routes/auth.routes.js"; // ✅ NEW
 
 const router = Router();
 
-router.get("/", (req, res) => res.json({ ok: true }));
-
+router.use("/auth", authRoutes); // ✅ NEW
 router.use("/customers", customerRoutes);
 router.use("/transactions", transactionRoutes);
-router.use("/stock", stockRoutes);            // ✅ ADD 
-router.use("/summary", summaryRoutes);
+router.use("/stock", stockRoutes);
 router.use("/sales", salesRoutes);
+router.use("/summary", summaryRoutes);
 
 export default router;
