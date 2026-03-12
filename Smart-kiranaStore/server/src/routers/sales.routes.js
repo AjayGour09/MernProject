@@ -1,10 +1,9 @@
 import { Router } from "express";
 import SaleDay from "../models/SaleDay.model.js";
-import { log } from "../utils/logger.js";
+import { protect, adminOnly } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// helper: today in YYYY-MM-DD (server local time)
 function todayStr() {
   const d = new Date();
   const y = d.getFullYear();
@@ -13,81 +12,90 @@ function todayStr() {
   return `${y}-${m}-${day}`;
 }
 
-// GET /api/sales/today
-router.get("/today", async (req, res, next) => {
+// today
+router.get("/today", protect, adminOnly, async (req, res, next) => {
   try {
+    const { shopId } = req.query;
     const date = todayStr();
-    const doc = await SaleDay.findOne({ date });
-    res.json(
-      doc || { date, cash: 0, upi: 0, note: "", total: 0 }
-    );
+
+    const doc = await SaleDay.findOne({ shopId, date });
+    res.json(doc || { date, cash: 0, upi: 0, total: 0, note: "" });
   } catch (e) {
     next(e);
   }
 });
 
-// POST /api/sales  (upsert by date)
-router.post("/", async (req, res, next) => {
+// save day
+router.post("/", protect, adminOnly, async (req, res, next) => {
   try {
-    const { date, cash = 0, upi = 0, note = "" } = req.body;
+    const { shopId, date, cash = 0, upi = 0, note = "" } = req.body;
 
-    log.info("POST /sales:", { date, cash, upi });
-
-    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return res.status(400).json({ message: "Valid date required (YYYY-MM-DD)" });
+    if (!shopId || !date) {
+      return res.status(400).json({ message: "shopId & date required" });
     }
 
     const c = Number(cash);
     const u = Number(upi);
-    if (!Number.isFinite(c) || c < 0) return res.status(400).json({ message: "Cash must be >= 0" });
-    if (!Number.isFinite(u) || u < 0) return res.status(400).json({ message: "UPI must be >= 0" });
+    const total = c + u;
 
     const doc = await SaleDay.findOneAndUpdate(
-      { date },
-      { $set: { cash: c, upi: u, note: String(note || "").slice(0, 120) } },
+      { shopId, date },
+      { shopId, date, cash: c, upi: u, total, note: String(note || "").slice(0, 120) },
       { new: true, upsert: true }
     );
 
-    res.status(201).json({ ...doc.toObject(), total: doc.cash + doc.upi });
+    res.json(doc);
   } catch (e) {
     next(e);
   }
 });
 
-// GET /api/sales?limit=7
-router.get("/", async (req, res, next) => {
+// list
+router.get("/", protect, adminOnly, async (req, res, next) => {
   try {
-    const limit = Math.min(Number(req.query.limit || 7), 60);
-    const list = await SaleDay.find().sort({ date: -1 }).limit(limit);
-    res.json(list.map((d) => ({ ...d.toObject(), total: d.cash + d.upi })));
+    const { shopId } = req.query;
+    const limit = Number(req.query.limit || 7);
+
+    const list = await SaleDay.find({ shopId })
+      .sort({ date: -1 })
+      .limit(limit);
+
+    res.json(list);
   } catch (e) {
     next(e);
   }
 });
-// GET /api/sales/month?days=30
-router.get("/month", async (req, res, next) => {
-  try {
-    const days = Math.min(Number(req.query.days || 30), 365);
 
-    // last N dates (string compare works for YYYY-MM-DD)
-    const now = new Date();
-    const from = new Date(now);
-    from.setDate(now.getDate() - (days - 1));
+// month / range summary
+router.get("/month", protect, adminOnly, async (req, res, next) => {
+  try {
+    const { shopId } = req.query;
+    const days = Number(req.query.days || 30);
+
+    const from = new Date();
+    from.setDate(from.getDate() - days + 1);
 
     const y = from.getFullYear();
     const m = String(from.getMonth() + 1).padStart(2, "0");
     const d = String(from.getDate()).padStart(2, "0");
-    const fromDate = `${y}-${m}-${d}`;
+    const fromStr = `${y}-${m}-${d}`;
 
-    const agg = await SaleDay.aggregate([
-      { $match: { date: { $gte: fromDate } } },
-      { $group: { _id: null, cash: { $sum: "$cash" }, upi: { $sum: "$upi" } } },
-    ]);
+    const rows = await SaleDay.find({
+      shopId,
+      date: { $gte: fromStr },
+    });
 
-    const cash = agg[0]?.cash || 0;
-    const upi = agg[0]?.upi || 0;
+    const summary = rows.reduce(
+      (acc, row) => {
+        acc.cash += Number(row.cash || 0);
+        acc.upi += Number(row.upi || 0);
+        acc.total += Number(row.total || 0);
+        return acc;
+      },
+      { cash: 0, upi: 0, total: 0 }
+    );
 
-    res.json({ days, fromDate, cash, upi, total: cash + upi });
+    res.json(summary);
   } catch (e) {
     next(e);
   }

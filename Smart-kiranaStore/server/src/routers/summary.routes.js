@@ -1,7 +1,8 @@
 import { Router } from "express";
-import Customer from "../models/Customer.model.js";
+import ShopCustomer from "../models/ShopCustomer.model.js";
 import Product from "../models/Product.model.js";
 import SaleDay from "../models/SaleDay.model.js";
+import { protect, adminOnly } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
@@ -13,21 +14,31 @@ function todayStr() {
   return `${y}-${m}-${day}`;
 }
 
-router.get("/", async (req, res, next) => {
+router.get("/", protect, adminOnly, async (req, res, next) => {
   try {
-    const totalCustomers = await Customer.countDocuments();
+    const { shopId } = req.query;
 
-    const bakiAgg = await Customer.aggregate([
+    const totalCustomers = await ShopCustomer.countDocuments({ shopId });
+
+    const bakiAgg = await ShopCustomer.aggregate([
+      { $match: { shopId } },
       { $group: { _id: null, total: { $sum: "$balance" } } },
     ]);
+
     const totalBaki = bakiAgg[0]?.total || 0;
 
     const lowStockCount = await Product.countDocuments({
+      shopId,
       $expr: { $lte: ["$qty", "$minStock"] },
     });
 
     const date = todayStr();
-    const todayDoc = await SaleDay.findOne({ date });
+
+    const todayDoc = await SaleDay.findOne({
+      shopId,
+      date,
+    });
+
     const todaySales = (todayDoc?.cash || 0) + (todayDoc?.upi || 0);
 
     res.json({

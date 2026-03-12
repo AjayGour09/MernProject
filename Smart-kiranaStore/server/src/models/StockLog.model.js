@@ -2,11 +2,24 @@ import mongoose from "mongoose";
 
 const stockLogSchema = new mongoose.Schema(
   {
-    productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
-    change: { type: Number, required: true }, // +10, -2 etc
-    reason: { type: String, default: "" },
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
+      index: true,
+    },
+    change: {
+      type: Number,
+      required: true,
+    },
+    reason: {
+      type: String,
+      default: "",
+      trim: true,
+    },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("StockLog", stockLogSchema);
+export default mongoose.models.StockLog ||
+  mongoose.model("StockLog", stockLogSchema);

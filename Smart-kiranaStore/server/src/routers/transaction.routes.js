@@ -1,131 +1,74 @@
 import { Router } from "express";
-import mongoose from "mongoose";
-import Customer from "../models/Customer.model.js";
 import Transaction from "../models/Transaction.model.js";
-import { log } from "../utils/logger.js";
+import ShopCustomer from "../models/ShopCustomer.model.js";
+import { protect, adminOnly } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-/**
- * POST /api/transactions
- * body:
- * {
- *   customerId,
- *   type: "UDAAR" | "PAYMENT",
- *   amount,
- *   note?,
- *   items?: [{ name, qty, price, total }]
- * }
- */
-router.post("/", async (req, res, next) => {
+// add transaction
+router.post("/", protect, adminOnly, async (req, res, next) => {
   try {
-    const { customerId, type, amount, note = "", items = [] } = req.body;
-
-    log.info("POST /transactions payload:", {
+    const {
+      shopId,
       customerId,
       type,
       amount,
-      itemsCount: Array.isArray(items) ? items.length : "invalid",
-    });
+      note = "",
+      items = [],
+    } = req.body;
 
-    if (!mongoose.isValidObjectId(customerId)) {
-      log.warn("Invalid customerId:", customerId);
-      return res.status(400).json({ message: "Invalid customerId" });
-    }
-
-    if (!["UDAAR", "PAYMENT"].includes(type)) {
-      log.warn("Invalid type:", type);
-      return res.status(400).json({ message: "Invalid type" });
-    }
-
-    const amt = Number(amount);
-    if (!Number.isFinite(amt) || amt <= 0) {
-      log.warn("Invalid amount:", amount);
-      return res.status(400).json({ message: "Amount must be > 0" });
-    }
-
-    const customer = await Customer.findById(customerId);
-    if (!customer) {
-      log.warn("Customer not found:", customerId);
-      return res.status(404).json({ message: "Customer not found" });
-    }
-
-    let cleanItems = [];
-
-    if (type === "UDAAR") {
-      if (!Array.isArray(items)) {
-        return res.status(400).json({ message: "Items must be an array" });
-      }
-
-      cleanItems = items
-        .map((it) => ({
-          name: String(it?.name || "").trim(),
-          qty: Number(it?.qty),
-          price: Number(it?.price),
-          total: Number(it?.total),
-        }))
-        .filter((it) => it.name && Number.isFinite(it.qty) && it.qty > 0);
-
-      cleanItems = cleanItems.map((it) => {
-        const price = Number.isFinite(it.price) && it.price >= 0 ? it.price : 0;
-        const total = it.qty * price;
-        return { ...it, price, total };
+    if (!shopId || !customerId || !type || !amount) {
+      return res.status(400).json({
+        message: "shopId, customerId, type, amount required",
       });
     }
 
+    const amt = Number(amount);
+
+    const relation = await ShopCustomer.findOne({
+      shopId,
+      customerId,
+    });
+
+    if (!relation) {
+      return res.status(404).json({ message: "Customer not linked to shop" });
+    }
+
     const tx = await Transaction.create({
+      shopId,
       customerId,
       type,
       amount: amt,
-      note: String(note || "").slice(0, 120),
-      items: cleanItems,
+      note,
+      items,
     });
 
-    // ✅ NEW LOGIC:
-    // positive balance = baki
-    // negative balance = advance jama
-    if (type === "UDAAR") customer.balance += amt;
-    else customer.balance -= amt;
+    if (type === "UDAAR") {
+      relation.balance += amt;
+    } else {
+      relation.balance -= amt;
+    }
 
-    await customer.save();
+    await relation.save();
 
-    log.info("Transaction saved:", tx._id, "New balance:", customer.balance);
-
-    return res.status(201).json({
-      transaction: tx,
-      customer: {
-        _id: customer._id,
-        name: customer.name,
-        phone: customer.phone,
-        balance: customer.balance,
-      },
-    });
+    res.status(201).json(tx);
   } catch (e) {
-    log.error("POST /transactions error:", e?.message);
     next(e);
   }
 });
 
-/**
- * GET /api/transactions/:customerId
- * Returns last 30 entries
- */
-router.get("/:customerId", async (req, res, next) => {
+// list customer transactions by shop
+router.get("/:customerId", protect, async (req, res, next) => {
   try {
-    const { customerId } = req.params;
+    const { shopId } = req.query;
 
-    if (!mongoose.isValidObjectId(customerId)) {
-      log.warn("Invalid customerId in params:", customerId);
-      return res.status(400).json({ message: "Invalid customerId" });
-    }
+    const list = await Transaction.find({
+      shopId,
+      customerId: req.params.customerId,
+    }).sort({ createdAt: -1 });
 
-    const list = await Transaction.find({ customerId })
-      .sort({ createdAt: -1 })
-      .limit(30);
-
-    return res.json(list);
+    res.json(list);
   } catch (e) {
-    log.error("GET /transactions/:customerId error:", e?.message);
     next(e);
   }
 });

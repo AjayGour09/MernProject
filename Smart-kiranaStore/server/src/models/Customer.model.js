@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 
 const customerSchema = new mongoose.Schema(
   {
+    // ✅ customer global hoga, ownerId nahi
     name: {
       type: String,
       required: true,
@@ -14,12 +15,6 @@ const customerSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    balance: {
-      type: Number,
-      default: 0,
-    },
-
-    // ✅ NEW auth fields
     password: {
       type: String,
       default: "",
@@ -32,18 +27,12 @@ const customerSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// hash password before save
-customerSchema.pre("save", async function (next) {
-  try {
-    if (!this.isModified("password")) return next();
-    if (!this.password) return next();
+customerSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
+  if (!this.password) return;
 
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (e) {
-    next(e);
-  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 customerSchema.methods.comparePassword = async function (plainPassword) {
@@ -51,4 +40,5 @@ customerSchema.methods.comparePassword = async function (plainPassword) {
   return bcrypt.compare(plainPassword, this.password);
 };
 
-export default mongoose.model("Customer", customerSchema);
+export default mongoose.models.Customer ||
+  mongoose.model("Customer", customerSchema);

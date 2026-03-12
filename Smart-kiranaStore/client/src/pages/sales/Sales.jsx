@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Container from "../../components/Container";
 import BottomNav from "../../components/BottomNav";
 import { SalesAPI } from "../../services/sales.api";
+import { AuthService } from "../../services/auth";
 
 function Pill({ active, onClick, children }) {
   return (
     <button
       onClick={onClick}
-      className={`rounded-xl px-4 py-3 text-sm font-semibold active:scale-[0.99] transition ${
+      className={`rounded-xl px-4 py-3 text-sm font-semibold ${
         active ? "bg-white text-black" : "bg-white/90 text-black"
       }`}
     >
@@ -20,7 +22,7 @@ function QuickBtn({ onClick, children }) {
   return (
     <button
       onClick={onClick}
-      className="rounded-xl border bg-white px-3 py-2 text-sm font-semibold active:scale-[0.99] transition"
+      className="rounded-xl border bg-white px-3 py-2 text-sm font-semibold"
     >
       {children}
     </button>
@@ -40,7 +42,10 @@ function todayStr() {
 }
 
 export default function Sales() {
-  const [range, setRange] = useState(30); // 7 | 30 | 90
+  const navigate = useNavigate();
+  const shop = AuthService.getSelectedShop();
+
+  const [range, setRange] = useState(30);
   const [date, setDate] = useState(todayStr());
   const [cash, setCash] = useState("");
   const [upi, setUpi] = useState("");
@@ -57,9 +62,7 @@ export default function Sales() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const total = useMemo(() => {
-    return Number(cash || 0) + Number(upi || 0);
-  }, [cash, upi]);
+  const total = useMemo(() => Number(cash || 0) + Number(upi || 0), [cash, upi]);
 
   const load = async () => {
     setErr("");
@@ -72,14 +75,7 @@ export default function Sales() {
       ]);
 
       setList(Array.isArray(days) ? days : []);
-
-      setSummary(
-        monthSummary || {
-          total: 0,
-          cash: 0,
-          upi: 0,
-        }
-      );
+      setSummary(monthSummary || { total: 0, cash: 0, upi: 0 });
     } catch (e) {
       setErr(e.message || "Load failed");
     } finally {
@@ -88,32 +84,24 @@ export default function Sales() {
   };
 
   useEffect(() => {
+    if (!shop?._id) {
+      navigate("/shops", { replace: true });
+      return;
+    }
     load();
-    // eslint-disable-next-line
-  }, [range]);
+  }, [shop?._id, range]);
 
-  const addCash = (v) => {
-    setCash(String(Number(cash || 0) + v));
-  };
-
-  const addUpi = (v) => {
-    setUpi(String(Number(upi || 0) + v));
-  };
+  const addCash = (v) => setCash(String(Number(cash || 0) + v));
+  const addUpi = (v) => setUpi(String(Number(upi || 0) + v));
 
   const saveSales = async () => {
     setErr("");
-
     const c = Number(cash || 0);
     const u = Number(upi || 0);
 
     if (!date) return setErr("Date required");
     if (!Number.isFinite(c) || c < 0) return setErr("Cash invalid");
     if (!Number.isFinite(u) || u < 0) return setErr("UPI invalid");
-
-    // optional safety
-    if (c > 10000000 || u > 10000000) {
-      return setErr("Value too large");
-    }
 
     setSaving(true);
     try {
@@ -124,14 +112,10 @@ export default function Sales() {
         note: note.trim(),
       });
 
-      // ✅ form clear after save
       setCash("");
       setUpi("");
       setNote("");
-
-      // ✅ refresh summary + list
       await load();
-
       alert("Sales saved ✅");
     } catch (e) {
       setErr(e.message || "Save failed");
@@ -142,33 +126,21 @@ export default function Sales() {
 
   return (
     <>
-      <Container title="Sales">
-        {/* Summary */}
+      <Container title={`Sales • ${shop?.shopName || ""}`}>
         <div className="rounded-2xl bg-black p-5 text-white shadow-sm">
           <div className="text-sm opacity-80">Last {range} days</div>
-
-          <div className="mt-2 text-4xl font-extrabold">
-            {money(summary.total)}
-          </div>
-
+          <div className="mt-2 text-4xl font-extrabold">{money(summary.total)}</div>
           <div className="mt-2 text-sm opacity-90">
             Cash: {money(summary.cash)} • UPI: {money(summary.upi)}
           </div>
 
           <div className="mt-5 flex gap-3">
-            <Pill active={range === 7} onClick={() => setRange(7)}>
-              7D
-            </Pill>
-            <Pill active={range === 30} onClick={() => setRange(30)}>
-              30D
-            </Pill>
-            <Pill active={range === 90} onClick={() => setRange(90)}>
-              90D
-            </Pill>
+            <Pill active={range === 7} onClick={() => setRange(7)}>7D</Pill>
+            <Pill active={range === 30} onClick={() => setRange(30)}>30D</Pill>
+            <Pill active={range === 90} onClick={() => setRange(90)}>90D</Pill>
           </div>
         </div>
 
-        {/* Entry Form */}
         <div className="mt-4 rounded-2xl bg-white p-4 shadow ring-1 ring-black/5">
           <div className="text-sm font-bold text-gray-900">Date</div>
 
@@ -184,14 +156,11 @@ export default function Sales() {
               <div className="mb-2 text-sm text-gray-600">Cash (₹)</div>
               <input
                 value={cash}
-                onChange={(e) =>
-                  setCash(e.target.value.replace(/\D/g, "").slice(0, 9))
-                }
+                onChange={(e) => setCash(e.target.value.replace(/\D/g, "").slice(0, 9))}
                 placeholder="Cash"
                 inputMode="numeric"
                 className="w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
               />
-
               <div className="mt-2 flex gap-2">
                 <QuickBtn onClick={() => addCash(100)}>+100</QuickBtn>
                 <QuickBtn onClick={() => addCash(200)}>+200</QuickBtn>
@@ -203,14 +172,11 @@ export default function Sales() {
               <div className="mb-2 text-sm text-gray-600">UPI (₹)</div>
               <input
                 value={upi}
-                onChange={(e) =>
-                  setUpi(e.target.value.replace(/\D/g, "").slice(0, 9))
-                }
+                onChange={(e) => setUpi(e.target.value.replace(/\D/g, "").slice(0, 9))}
                 placeholder="UPI"
                 inputMode="numeric"
                 className="w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
               />
-
               <div className="mt-2 flex gap-2">
                 <QuickBtn onClick={() => addUpi(100)}>+100</QuickBtn>
                 <QuickBtn onClick={() => addUpi(200)}>+200</QuickBtn>
@@ -235,7 +201,7 @@ export default function Sales() {
           <button
             onClick={saveSales}
             disabled={saving}
-            className="mt-4 w-full rounded-2xl bg-black py-3 font-semibold text-white active:scale-[0.99] transition disabled:opacity-60"
+            className="mt-4 w-full rounded-2xl bg-black py-3 font-semibold text-white disabled:opacity-60"
           >
             {saving ? "Saving..." : "✅ Save Sales"}
           </button>
@@ -247,7 +213,6 @@ export default function Sales() {
           ) : null}
         </div>
 
-        {/* Last Days */}
         <div className="mt-5">
           <div className="mb-2 text-sm font-bold text-gray-900">Last Days</div>
 
@@ -261,39 +226,17 @@ export default function Sales() {
 
           <div className="space-y-3">
             {list.map((d) => (
-              <div
-                key={d._id || d.date}
-                className="rounded-2xl bg-white p-4 shadow ring-1 ring-black/5"
-              >
+              <div key={d._id || d.date} className="rounded-2xl bg-white p-4 shadow ring-1 ring-black/5">
                 <div className="flex items-center justify-between">
-                  <div className="text-lg font-bold text-gray-900">
-                    {d.date}
-                  </div>
-                  <div className="text-2xl font-extrabold">
-                    {money(d.total)}
-                  </div>
+                  <div className="text-lg font-bold text-gray-900">{d.date}</div>
+                  <div className="text-2xl font-extrabold">{money(d.total)}</div>
                 </div>
 
                 <div className="mt-2 text-sm text-gray-600">
                   Cash={money(d.cash)} • UPI={money(d.upi)}
                 </div>
 
-                {d.note ? (
-                  <div className="mt-2 text-sm text-gray-700">{d.note}</div>
-                ) : null}
-
-                <button
-                  onClick={() => {
-                    setDate(d.date);
-                    setCash(String(d.cash || ""));
-                    setUpi(String(d.upi || ""));
-                    setNote(d.note || "");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="mt-3 rounded-xl border px-3 py-2 text-sm font-semibold active:scale-[0.99]"
-                >
-                  Edit
-                </button>
+                {d.note ? <div className="mt-2 text-sm text-gray-700">{d.note}</div> : null}
               </div>
             ))}
           </div>

@@ -13,12 +13,7 @@ function signToken(payload) {
   });
 }
 
-/**
- * ✅ Bootstrap admin
- * First time ek admin create karne ke liye.
- * Later is route ko remove/secure kar sakte ho.
- */
-router.post("/setup-admin", async (req, res, next) => {
+router.post("/setup-admin", async (req, res) => {
   try {
     const { name = "Admin", email, password } = req.body;
 
@@ -26,14 +21,16 @@ router.post("/setup-admin", async (req, res, next) => {
       return res.status(400).json({ message: "email & password required" });
     }
 
-    const exists = await Admin.findOne({ email: String(email).toLowerCase() });
+    const cleanEmail = String(email).trim().toLowerCase();
+
+    const exists = await Admin.findOne({ email: cleanEmail });
     if (exists) {
       return res.status(409).json({ message: "Admin already exists" });
     }
 
     const admin = await Admin.create({
-      name: String(name).trim(),
-      email: String(email).trim().toLowerCase(),
+      name: String(name).trim() || "Admin",
+      email: cleanEmail,
       password: String(password),
     });
 
@@ -46,14 +43,12 @@ router.post("/setup-admin", async (req, res, next) => {
       },
     });
   } catch (e) {
-    next(e);
+    console.log("❌ SETUP ADMIN ERROR:", e);
+    return res.status(500).json({ message: e.message || "Setup failed" });
   }
 });
 
-/**
- * ✅ Admin login
- */
-router.post("/admin/login", async (req, res, next) => {
+router.post("/admin/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -61,9 +56,8 @@ router.post("/admin/login", async (req, res, next) => {
       return res.status(400).json({ message: "email & password required" });
     }
 
-    const admin = await Admin.findOne({
-      email: String(email).trim().toLowerCase(),
-    });
+    const cleanEmail = String(email).trim().toLowerCase();
+    const admin = await Admin.findOne({ email: cleanEmail });
 
     if (!admin || !admin.isActive) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -91,15 +85,45 @@ router.post("/admin/login", async (req, res, next) => {
       },
     });
   } catch (e) {
-    next(e);
+    console.log("❌ ADMIN LOGIN ERROR:", e);
+    return res.status(500).json({ message: e.message || "Login failed" });
   }
 });
 
-/**
- * ✅ Customer login
- * login by phone + password
- */
-router.post("/customer/login", async (req, res, next) => {
+router.post("/customer/set-password", async (req, res) => {
+  try {
+    const { phone, password, confirmPassword } = req.body;
+
+    if (!phone || !password || !confirmPassword) {
+      return res
+        .status(400)
+        .json({ message: "phone, password, confirmPassword required" });
+    }
+
+    if (String(password).trim().length < 4) {
+      return res.status(400).json({ message: "Password at least 4 chars" });
+    }
+
+    if (String(password) !== String(confirmPassword)) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    const customer = await Customer.findOne({ phone: String(phone).trim() });
+    if (!customer || !customer.isActive) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    customer.password = String(password);
+    await customer.save();
+
+    return res.json({ message: "Password set successfully" });
+  } catch (e) {
+    console.log("❌ CUSTOMER SET PASSWORD ERROR:", e);
+    return res.status(500).json({ message: e.message || "Set password failed" });
+  }
+});
+
+router.post("/customer/login", async (req, res) => {
   try {
     const { phone, password } = req.body;
 
@@ -137,20 +161,16 @@ router.post("/customer/login", async (req, res, next) => {
       },
     });
   } catch (e) {
-    next(e);
+    console.log("❌ CUSTOMER LOGIN ERROR:", e);
+    return res.status(500).json({ message: e.message || "Login failed" });
   }
 });
 
-/**
- * ✅ Check current logged-in user
- */
-router.get("/me", protect, async (req, res, next) => {
+router.get("/me", protect, async (req, res) => {
   try {
-    return res.json({
-      user: req.user,
-    });
+    return res.json({ user: req.user });
   } catch (e) {
-    next(e);
+    return res.status(500).json({ message: e.message || "Failed" });
   }
 });
 

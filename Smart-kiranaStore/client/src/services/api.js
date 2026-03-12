@@ -1,5 +1,9 @@
 const BASE_URL = "http://localhost:5000/api";
 
+function getToken() {
+  return localStorage.getItem("smart_kirana_token") || "";
+}
+
 async function parseError(res) {
   try {
     const data = await res.json();
@@ -10,9 +14,13 @@ async function parseError(res) {
 }
 
 export async function apiGet(path) {
+  const token = getToken();
+
   const res = await fetch(`${BASE_URL}${path}`, {
     method: "GET",
-    credentials: "include", // ✅ IMPORTANT
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   });
 
   if (!res.ok) throw new Error(await parseError(res));
@@ -20,10 +28,14 @@ export async function apiGet(path) {
 }
 
 export async function apiPost(path, body) {
+  const token = getToken();
+
   const res = await fetch(`${BASE_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include", // ✅ IMPORTANT
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(body),
   });
 

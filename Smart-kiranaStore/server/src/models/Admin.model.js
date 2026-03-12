@@ -1,47 +1,44 @@
-import mongoose from 'mongoose';
-import bcrypt, { genSalt } from 'bcryptjs'
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
-const adminSchema=new mongoose.Schema(
-    {
-    name:{
-         type:String,
-        required:true,
-        trim:true,
-        default:admin,
-    },email:{
-        type:String,
-        required:true,
-        unique:true,
-        trim:true,
-        lowercase:true
+const adminSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      default: "Admin",
     },
-    password:{
-        type:String,
-        required:true,
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
     },
-    isActive:{
-        type:Boolean,
-        default:true,
+    password: {
+      type: String,
+      required: true,
     },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
-    {timestamps:true}
-   
-)
+  },
+  { timestamps: true }
+);
 
-adminSchema.pre("save",async function(next) {
-    try {
-        if(!this.isModified("password")) return next();
-        const salt = await bcrypt.genSalt(10);
-        this.password= await bcrypt.hash(this.password,salt);
-        next();
-    } catch (error) {
-        next(e);
-    }
-    
-})
+adminSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
 
-adminSchema.methods.comparePassword = async function(plainPassword){
-    return bcrypt.compare(plainPassword,this.password)
-}
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+});
 
-export default mongoose.model("Admin",adminSchema)
+adminSchema.methods.comparePassword = async function (plainPassword) {
+  return bcrypt.compare(plainPassword, this.password);
+};
+
+const Admin = mongoose.models.Admin || mongoose.model("Admin", adminSchema);
+
+export default Admin;

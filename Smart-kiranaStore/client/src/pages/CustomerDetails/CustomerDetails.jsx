@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import Container from "../../components/Container";
 import BottomNav from "../../components/BottomNav";
 import { apiGet } from "../../services/api";
+import { AuthService } from "../../services/auth";
 
 function Pill({ active, onClick, children }) {
   return (
@@ -26,6 +27,8 @@ function formatBalance(balance) {
 
 export default function CustomerDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const shop = AuthService.getSelectedShop();
 
   const [customer, setCustomer] = useState(null);
   const [ledger, setLedger] = useState([]);
@@ -43,9 +46,10 @@ export default function CustomerDetails() {
     setLoading(true);
     try {
       const [c, tx] = await Promise.all([
-        apiGet(`/customers/${id}`),
-        apiGet(`/transactions/${id}`),
+        apiGet(`/customers/${id}?shopId=${shop._id}`),
+        apiGet(`/transactions/${id}?shopId=${shop._id}`),
       ]);
+
       setCustomer(c);
       setLedger(Array.isArray(tx) ? tx : []);
     } catch (e) {
@@ -56,40 +60,19 @@ export default function CustomerDetails() {
   };
 
   useEffect(() => {
-    load();
-    // eslint-disable-next-line
-  }, [id]);
-
-  const sendReminder = () => {
-    if (!customer?.phone) return alert("Phone missing");
-
-    const bal = Number(customer?.balance || 0);
-    const phone10 = String(customer.phone).replace(/\D/g, "").slice(-10);
-    if (phone10.length !== 10) return alert("Invalid phone number");
-
-    let msg = "";
-    if (bal > 0) {
-      msg = `Namaste ${customer.name || "Customer"} ji,\n\nAapka ₹${bal} baki hai.\nKripya payment kar dein.\n\n- Smart Kirana`;
-    } else if (bal < 0) {
-      msg = `Namaste ${customer.name || "Customer"} ji,\n\nAapke account me ₹${Math.abs(
-        bal
-      )} advance jama hai.\nAgli kharidari me adjust ho jayega.\n\n- Smart Kirana`;
-    } else {
-      msg = `Namaste ${customer.name || "Customer"} ji,\n\nAapka account clear hai.\n\n- Smart Kirana`;
+    if (!shop?._id) {
+      navigate("/shops", { replace: true });
+      return;
     }
-
-    window.open(
-      `https://wa.me/91${phone10}?text=${encodeURIComponent(msg)}`,
-      "_blank"
-    );
-  };
+    load();
+  }, [id, shop?._id]);
 
   const balanceUI = formatBalance(customer?.balance || 0);
 
   return (
     <>
       <Container
-        title="Customer History"
+        title={`Customer • ${shop?.shopName || ""}`}
         right={
           <button
             onClick={load}
@@ -130,12 +113,12 @@ export default function CustomerDetails() {
               📒 Add Entry
             </Link>
 
-            <button
-              onClick={sendReminder}
-              className="rounded-2xl bg-green-600 py-3 font-semibold text-white active:scale-[0.99]"
+            <Link
+              to="/customers"
+              className="rounded-2xl border py-3 text-center font-semibold active:scale-[0.99]"
             >
-              📲 WhatsApp
-            </button>
+              ← Back
+            </Link>
           </div>
         </div>
 
@@ -173,7 +156,6 @@ export default function CustomerDetails() {
               {Array.isArray(t.items) && t.items.length > 0 ? (
                 <div className="mt-3 rounded-2xl border p-3">
                   <div className="text-xs font-bold text-gray-700">Items</div>
-
                   <div className="mt-2 space-y-1">
                     {t.items.map((it, idx) => (
                       <div
