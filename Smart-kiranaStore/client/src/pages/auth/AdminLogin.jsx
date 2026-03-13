@@ -24,6 +24,7 @@ export default function AdminLogin() {
         password: password.trim(),
       });
 
+      // ✅ Admin login ke baad landing page nahi, shops page
       navigate("/shops", { replace: true });
     } catch (e) {
       setErr(e.message || "Login failed");
@@ -33,15 +34,15 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 px-4 py-8">
-      <div className="mx-auto max-w-md rounded-3xl bg-white p-6 shadow ring-1 ring-black/5">
+    <div className="min-h-screen bg-[#f6f7fb] px-4 py-8">
+      <div className="mx-auto max-w-md rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-black/5">
         <div className="text-sm font-semibold text-gray-500">Smart Kirana</div>
-        <div className="mt-1 text-3xl font-extrabold text-gray-900">
+        <div className="mt-2 text-4xl font-extrabold tracking-tight text-gray-900">
           Admin Login
         </div>
 
         <input
-          className="mt-5 w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
+          className="mt-6 w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -71,7 +72,7 @@ export default function AdminLogin() {
 
         <Link
           to="/admin/setup"
-          className="mt-4 block text-center text-sm font-semibold text-gray-600 underline"
+          className="mt-5 block text-center text-sm font-semibold text-gray-600 underline"
         >
           Create admin account
         </Link>

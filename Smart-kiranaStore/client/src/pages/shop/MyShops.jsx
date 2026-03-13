@@ -57,7 +57,9 @@ export default function MyShops() {
 
   const openShop = (shop) => {
     AuthService.setSelectedShop(shop);
-    navigate("/", { replace: true });
+
+    // ✅ shop open ke baad dashboard
+    navigate("/dashboard", { replace: true });
   };
 
   const logout = () => {
@@ -66,9 +68,9 @@ export default function MyShops() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 px-4 py-4">
+    <div className="min-h-screen bg-[#f6f7fb] px-4 py-4">
       <div className="mx-auto max-w-md">
-        <div className="rounded-3xl bg-white p-5 shadow ring-1 ring-black/5">
+        <div className="rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-sm font-semibold text-gray-500">
@@ -129,17 +131,16 @@ export default function MyShops() {
           </div>
         </div>
 
-        <div className="mt-4 rounded-3xl bg-white p-5 shadow ring-1 ring-black/5">
+        <div className="mt-4 rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
           <div className="text-base font-bold text-gray-900">Available Shops</div>
 
-          {loading ? <div className="mt-3 text-sm text-gray-600">Loading...</div> : null}
+          {loading ? (
+            <div className="mt-3 text-sm text-gray-600">Loading...</div>
+          ) : null}
 
           <div className="mt-3 space-y-3">
             {shops.map((shop) => (
-              <div
-                key={shop._id}
-                className="rounded-2xl border p-4"
-              >
+              <div key={shop._id} className="rounded-2xl border p-4">
                 <div className="text-lg font-bold">{shop.shopName}</div>
                 <div className="mt-1 text-sm text-gray-500">{shop.phone}</div>
                 <div className="text-sm text-gray-500">{shop.address}</div>

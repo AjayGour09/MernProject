@@ -235,7 +235,7 @@ export default function VideoMeet() {
           </div>
 
           {/* Controls */}
-          <div className="fixed bottom-0 w-full flex justify-center gap-6 py-4 bg-gray-800">
+          <div className="fixed bottom-1 w-full flex justify-center gap-6 py-4 bg-gray-800">
             <button onClick={handleVideo}>{video ? "🎥" : "🚫🎥"}</button>
             <button onClick={handleAudio}>{audio ? "🎤" : "🔇"}</button>
             <button onClick={handleEndCall}>📞❌</button>

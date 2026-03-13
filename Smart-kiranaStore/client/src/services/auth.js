@@ -2,7 +2,6 @@ const API_BASE = "http://localhost:5000/api";
 
 const TOKEN_KEY = "smart_kirana_token";
 const USER_KEY = "smart_kirana_user";
-const SHOP_KEY = "smart_kirana_shop";
 
 async function parseError(res) {
   try {
@@ -13,52 +12,41 @@ async function parseError(res) {
   }
 }
 
+async function post(path, body) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseError(res));
+  }
+
+  return res.json();
+}
+
 export const AuthService = {
+  async adminRegister(body) {
+    return post("/auth/admin/register", body);
+  },
+
+  async customerRegister(body) {
+    return post("/auth/customer/register", body);
+  },
+
   async adminLogin(body) {
-    const res = await fetch(`${API_BASE}/auth/admin/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (!res.ok) throw new Error(await parseError(res));
-    const data = await res.json();
-
+    const data = await post("/auth/admin/login", body);
     localStorage.setItem(TOKEN_KEY, data.token);
     localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-
     return data;
   },
 
   async customerLogin(body) {
-    const res = await fetch(`${API_BASE}/auth/customer/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (!res.ok) throw new Error(await parseError(res));
-    const data = await res.json();
-
+    const data = await post("/auth/customer/login", body);
     localStorage.setItem(TOKEN_KEY, data.token);
     localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-
     return data;
-  },
-
-  async customerSetPassword(body) {
-    const res = await fetch(`${API_BASE}/auth/customer/set-password`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (!res.ok) throw new Error(await parseError(res));
-    return res.json();
-  },
-
-  getToken() {
-    return localStorage.getItem(TOKEN_KEY) || "";
   },
 
   getUser() {
@@ -73,25 +61,8 @@ export const AuthService = {
     return !!localStorage.getItem(TOKEN_KEY);
   },
 
-  getSelectedShop() {
-    try {
-      return JSON.parse(localStorage.getItem(SHOP_KEY) || "null");
-    } catch {
-      return null;
-    }
-  },
-
-  setSelectedShop(shop) {
-    localStorage.setItem(SHOP_KEY, JSON.stringify(shop));
-  },
-
-  clearSelectedShop() {
-    localStorage.removeItem(SHOP_KEY);
-  },
-
   logout() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(SHOP_KEY);
   },
 };

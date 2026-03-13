@@ -5,11 +5,11 @@ export default function CustomerRoute({ children }) {
   const user = AuthService.getUser();
 
   if (!AuthService.isLoggedIn() || !user) {
-    return <Navigate to="/customer/login" replace />;
+    return <Navigate to="/auth/login/customer" replace />;
   }
 
   if (user.role !== "customer") {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/auth/login/admin" replace />;
   }
 
   return children;

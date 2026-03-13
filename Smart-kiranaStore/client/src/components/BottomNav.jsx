@@ -1,31 +1,116 @@
-import { NavLink } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
-function Item({ to, icon, label }) {
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        `flex flex-1 flex-col items-center justify-center py-2 text-xs font-semibold transition ${
-          isActive ? "text-black" : "text-gray-500"
-        }`
-      }
-    >
-      <div className="text-lg">{icon}</div>
-      <div className="mt-1">{label}</div>
-    </NavLink>
-  );
-}
+import Landing from "../pages/public/Landing.jsx";
+import Home from "../pages/home/Home.jsx";
+import Customers from "../pages/customer/Customers.jsx";
+import Khata from "../pages/khata/Khata.jsx";
+import Stock from "../pages/stock/Stock.jsx";
+import Sales from "../pages/sales/Sales.jsx";
+import CustomerDetails from "../pages/CustomerDetails/CustomerDetails.jsx";
 
-export default function BottomNav() {
+import AdminLogin from "../pages/auth/AdminLogin.jsx";
+import AdminSetup from "../pages/auth/AdminSetup.jsx";
+import CustomerLogin from "../pages/auth/CustomerLogin.jsx";
+import CustomerSetPassword from "../pages/auth/CustomerSetPassword.jsx";
+import MyAccount from "../pages/customer/MyAccount.jsx";
+import MyCustomerShops from "../pages/customer/MyShops.jsx";
+import MyShops from "../pages/shop/MyShops.jsx";
+
+import AdminRoute from "./AdminRoute.jsx";
+import CustomerRoute from "./CustomerRoute.jsx";
+
+export default function App() {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-md">
-        <Item to="/" icon="🏠" label="Home" />
-        <Item to="/customers" icon="👤" label="Customers" />
-        <Item to="/khata" icon="📒" label="Khata" />
-        <Item to="/stock" icon="📦" label="Stock" />
-        <Item to="/sales" icon="💰" label="Sales" />
-      </div>
+    <div className="min-h-screen bg-gray-100">
+      <Routes>
+        {/* public landing */}
+        <Route path="/" element={<Landing />} />
+
+        {/* public auth */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/setup" element={<AdminSetup />} />
+        <Route path="/customer/login" element={<CustomerLogin />} />
+        <Route path="/customer/set-password" element={<CustomerSetPassword />} />
+
+        {/* admin protected */}
+        <Route
+          path="/shops"
+          element={
+            <AdminRoute>
+              <MyShops />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard"
+          element={
+            <AdminRoute>
+              <Home />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/customers"
+          element={
+            <AdminRoute>
+              <Customers />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/customers/:id"
+          element={
+            <AdminRoute>
+              <CustomerDetails />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/khata"
+          element={
+            <AdminRoute>
+              <Khata />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/stock"
+          element={
+            <AdminRoute>
+              <Stock />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/sales"
+          element={
+            <AdminRoute>
+              <Sales />
+            </AdminRoute>
+          }
+        />
+
+        {/* customer protected */}
+        <Route
+          path="/my-shops"
+          element={
+            <CustomerRoute>
+              <MyCustomerShops />
+            </CustomerRoute>
+          }
+        />
+        <Route
+          path="/my-account"
+          element={
+            <CustomerRoute>
+              <MyAccount />
+            </CustomerRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </div>
   );
 }

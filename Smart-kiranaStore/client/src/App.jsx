@@ -1,109 +1,43 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-
-import Home from "./pages/home/Home.jsx";
-import Customers from "./pages/customer/Customers.jsx";
-import Khata from "./pages/khata/Khata.jsx";
-import Stock from "./pages/stock/Stock.jsx";
-import Sales from "./pages/sales/Sales.jsx";
-import CustomerDetails from "./pages/CustomerDetails/CustomerDetails.jsx";
-
-import AdminLogin from "./pages/auth/AdminLogin.jsx";
-import AdminSetup from "./pages/auth/AdminSetup.jsx";
-import CustomerLogin from "./pages/auth/CustomerLogin.jsx";
-import CustomerSetPassword from "./pages/auth/CustomerSetPassword.jsx";
-import MyAccount from "./pages/customer/MyAccount.jsx";
-import MyCustomerShops from "./pages/customer/MyShops.jsx";
-import MyShops from "./pages/shop/MyShops.jsx";
-
-import AdminRoute from "./components/AdminRoute.jsx";
-import CustomerRoute from "./components/CustomerRoute.jsx";
+import HomePage from "./pages/public/HomePage";
+import RoleSelect from "./pages/auth/RoleSelect";
+import AuthPage from "./pages/auth/AuthPage";
+import AdminPage from "./pages/admin/AdminPage";
+import CustomerPage from "./pages/customer/CustomerPage";
+import AdminRoute from "./components/AdminRoute";
+import CustomerRoute from "./components/CustomerRoute";
+import ScrollToTop from "./components/ScrollToTop";
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-100">
+    <>
+      <ScrollToTop />
+
       <Routes>
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/setup" element={<AdminSetup />} />
-        <Route path="/customer/login" element={<CustomerLogin />} />
-        <Route path="/customer/set-password" element={<CustomerSetPassword />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/choose/:mode" element={<RoleSelect />} />
+        <Route path="/auth/:mode/:role" element={<AuthPage />} />
 
         <Route
-          path="/shops"
+          path="/dashboard"
           element={
             <AdminRoute>
-              <MyShops />
-            </AdminRoute>
-          }
-        />
-
-        <Route
-          path="/"
-          element={
-            <AdminRoute>
-              <Home />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/customers"
-          element={
-            <AdminRoute>
-              <Customers />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/customers/:id"
-          element={
-            <AdminRoute>
-              <CustomerDetails />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/khata"
-          element={
-            <AdminRoute>
-              <Khata />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/stock"
-          element={
-            <AdminRoute>
-              <Stock />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/sales"
-          element={
-            <AdminRoute>
-              <Sales />
+              <AdminPage />
             </AdminRoute>
           }
         />
 
-        <Route
-          path="/my-shops"
-          element={
-            <CustomerRoute>
-              <MyCustomerShops />
-            </CustomerRoute>
-          }
-        />
         <Route
           path="/my-account"
           element={
             <CustomerRoute>
-              <MyAccount />
+              <CustomerPage />
             </CustomerRoute>
           }
         />
 
-        <Route path="*" element={<Navigate to="/admin/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </div>
+    </>
   );
 }
