@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import app from "./src/app.js";
+import app from "./app.js";
 import { ENV } from "./src/config/env.js";
 
 async function start() {
