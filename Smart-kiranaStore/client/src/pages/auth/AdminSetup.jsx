@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { User, Mail, Lock, Store, ArrowRight } from "lucide-react";
 
 const API_BASE = "http://localhost:5000/api";
 
@@ -26,7 +27,8 @@ export default function AdminSetup() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const onSubmit = async () => {
+  const onSubmit = async (e) => {
+    e.preventDefault();
     setErr("");
     setMsg("");
 
@@ -51,15 +53,14 @@ export default function AdminSetup() {
       });
 
       if (!res.ok) {
-        const message = await parseError(res);
-        throw new Error(message);
+        throw new Error(await parseError(res));
       }
 
-      setMsg("Admin account created ✅ Ab login karo");
+      setMsg("Admin account created successfully");
 
       setTimeout(() => {
         navigate("/admin/login");
-      }, 1200);
+      }, 1000);
     } catch (error) {
       setErr(error.message || "Setup failed");
     } finally {
@@ -68,61 +69,132 @@ export default function AdminSetup() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 px-4 py-8">
-      <div className="mx-auto max-w-md rounded-3xl bg-white p-6 shadow ring-1 ring-black/5">
-        <div className="text-sm font-semibold text-gray-500">Smart Kirana</div>
-        <div className="mt-1 text-3xl font-extrabold text-gray-900">
-          Admin Setup
+    <div className="min-h-screen bg-[#f5f7fb] px-4 py-8">
+      <div className="mx-auto max-w-5xl">
+        <div className="grid overflow-hidden rounded-[32px] border border-black/5 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)] lg:grid-cols-2">
+          <div className="hidden bg-[#0f172a] p-10 text-white lg:flex lg:flex-col lg:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold">
+                <Store className="h-4 w-4" />
+                Smart Kirana
+              </div>
+
+              <h1 className="mt-8 text-4xl font-black leading-tight tracking-tight">
+                Create admin
+                <span className="block text-white/65">start your setup</span>
+              </h1>
+
+              <p className="mt-4 max-w-md text-sm leading-7 text-white/70">
+                Apna admin account banao aur Smart Kirana dashboard use karna start karo.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+              <div className="text-sm font-semibold text-white/70">Quick setup</div>
+              <div className="mt-2 text-2xl font-black">Minimal • Clean • Ready</div>
+            </div>
+          </div>
+
+          <div className="p-6 sm:p-8 md:p-10">
+            <div className="mx-auto max-w-md">
+              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
+                Setup
+              </div>
+              <h2 className="mt-2 text-3xl font-black tracking-tight text-gray-900">
+                Create account
+              </h2>
+              <p className="mt-2 text-sm text-gray-500">
+                Bas basic details fill karo
+              </p>
+
+              <form onSubmit={onSubmit} className="mt-8 space-y-4">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Name
+                  </label>
+                  <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 focus-within:border-black focus-within:bg-white">
+                    <User className="h-5 w-5 text-gray-400" />
+                    <input
+                      placeholder="Admin name"
+                      className="w-full bg-transparent text-base outline-none"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Email
+                  </label>
+                  <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 focus-within:border-black focus-within:bg-white">
+                    <Mail className="h-5 w-5 text-gray-400" />
+                    <input
+                      type="email"
+                      placeholder="Enter email"
+                      className="w-full bg-transparent text-base outline-none"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Password
+                  </label>
+                  <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 focus-within:border-black focus-within:bg-white">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                    <input
+                      type="password"
+                      placeholder="Create password"
+                      className="w-full bg-transparent text-base outline-none"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {err ? (
+                  <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {err}
+                  </div>
+                ) : null}
+
+                {msg ? (
+                  <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">
+                    {msg}
+                  </div>
+                ) : null}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0f172a] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-black disabled:opacity-60"
+                >
+                  {loading ? "Creating..." : "Create Admin"}
+                  {!loading ? <ArrowRight className="h-4 w-4" /> : null}
+                </button>
+              </form>
+
+              <div className="mt-6 space-y-3 text-center">
+                <Link
+                  to="/admin/login"
+                  className="block text-sm font-semibold text-gray-600 underline underline-offset-4"
+                >
+                  Already have admin? Login
+                </Link>
+
+                <Link
+                  to="/"
+                  className="block text-sm font-semibold text-gray-500 underline underline-offset-4"
+                >
+                  Back to home
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
-
-        <input
-          className="mt-5 w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
-          placeholder="Name"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-        />
-
-        <input
-          className="mt-3 w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
-          placeholder="Email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-        />
-
-        <input
-          type="password"
-          className="mt-3 w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
-          placeholder="Password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-        />
-
-        <button
-          onClick={onSubmit}
-          disabled={loading}
-          className="mt-4 w-full rounded-2xl bg-black py-3 font-semibold text-white disabled:opacity-60"
-        >
-          {loading ? "Creating..." : "Create Admin"}
-        </button>
-
-        {err ? (
-          <div className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
-            {err}
-          </div>
-        ) : null}
-
-        {msg ? (
-          <div className="mt-3 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">
-            {msg}
-          </div>
-        ) : null}
-
-        <Link
-          to="/admin/login"
-          className="mt-4 block text-center text-sm font-semibold text-gray-600 underline"
-        >
-          Already have admin? Login
-        </Link>
       </div>
     </div>
   );

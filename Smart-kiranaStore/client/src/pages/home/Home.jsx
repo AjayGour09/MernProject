@@ -1,33 +1,54 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Container from "../../components/Container";
-import BottomNav from "../../components/BottomNav";
+import {
+  Users,
+  Wallet,
+  Boxes,
+  BadgeIndianRupee,
+  RefreshCw,
+  Store,
+  LogOut,
+  ArrowRight,
+} from "lucide-react";
 import { SummaryAPI } from "../../services/summary.api";
 import { AuthService } from "../../services/auth";
 
-function StatCard({ label, value, sub, to }) {
-  const card = (
-    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5 active:scale-[0.99] transition">
-      <div className="text-xs font-semibold text-gray-500">{label}</div>
-      <div className="mt-1 text-2xl font-extrabold text-gray-900">{value}</div>
-      {sub ? <div className="mt-1 text-xs text-gray-500">{sub}</div> : null}
-    </div>
-  );
+function StatCard({ title, value, sub, to, icon }) {
+  return (
+    <Link
+      to={to}
+      className="group rounded-[28px] border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold text-gray-500">{title}</div>
+          <div className="mt-2 text-3xl font-black tracking-tight text-gray-900">
+            {value}
+          </div>
+          {sub ? <div className="mt-2 text-sm text-gray-500">{sub}</div> : null}
+        </div>
 
-  return to ? <Link to={to}>{card}</Link> : card;
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0f172a] text-white">
+          {icon}
+        </div>
+      </div>
+
+      <div className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-gray-800">
+        Open
+        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+      </div>
+    </Link>
+  );
 }
 
-function ActionBtn({ to, children, variant = "dark" }) {
-  const base =
-    "rounded-2xl px-4 py-4 text-center font-semibold shadow-sm ring-1 ring-black/5 active:scale-[0.99] transition";
-  const cls =
-    variant === "dark"
-      ? `${base} bg-black text-white`
-      : `${base} bg-white text-gray-900`;
-
+function ActionCard({ to, title, sub }) {
   return (
-    <Link to={to} className={cls}>
-      {children}
+    <Link
+      to={to}
+      className="rounded-[28px] border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+    >
+      <div className="text-lg font-black tracking-tight text-gray-900">{title}</div>
+      <div className="mt-2 text-sm leading-6 text-gray-500">{sub}</div>
     </Link>
   );
 }
@@ -46,14 +67,18 @@ export default function Home() {
   });
 
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const load = async () => {
     setErr("");
+    setLoading(true);
     try {
       const res = await SummaryAPI.get();
       setData(res);
     } catch (e) {
       setErr(e.message || "Summary load failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -75,119 +100,131 @@ export default function Home() {
   };
 
   return (
-    <>
-      <Container
-        title={shop?.shopName || "Smart Kirana"}
-        right={
-          <div className="flex gap-2">
-            <button
-              onClick={load}
-              className="rounded-xl border bg-white px-3 py-2 text-sm font-semibold active:scale-[0.99]"
-            >
-              ↻
-            </button>
-            <button
-              onClick={changeShop}
-              className="rounded-xl border bg-white px-3 py-2 text-sm font-semibold active:scale-[0.99]"
-            >
-              Shops
-            </button>
-            <button
-              onClick={logout}
-              className="rounded-xl border bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 active:scale-[0.99]"
-            >
-              Logout
-            </button>
-          </div>
-        }
-      >
-        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="text-sm text-gray-500">Logged in as</div>
-          <div className="mt-1 flex items-center justify-between">
+    <div className="min-h-screen bg-[#f5f7fb] px-4 py-6">
+      <div className="mx-auto max-w-7xl">
+        <div className="rounded-[32px] bg-[#0f172a] p-6 text-white shadow-[0_20px_60px_rgba(15,23,42,0.18)] md:p-8">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <div className="text-lg font-extrabold text-gray-900">
-                {user?.name || "Admin"}
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold">
+                <Store className="h-4 w-4" />
+                Admin Dashboard
               </div>
-              <div className="text-sm text-gray-500">{user?.email || ""}</div>
+
+              <h1 className="mt-5 text-3xl font-black tracking-tight md:text-5xl">
+                {shop?.shopName || "Smart Kirana"}
+              </h1>
+
+              <p className="mt-3 text-sm text-white/70">
+                {user?.name || "Admin"} {user?.email ? `• ${user.email}` : ""}
+              </p>
+
+              <p className="mt-2 text-sm text-white/60">
+                {shop?.phone || "No phone"} {shop?.address ? `• ${shop.address}` : ""}
+              </p>
+
+              {data.todayDate ? (
+                <div className="mt-4 inline-flex rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white/80">
+                  Date: {data.todayDate}
+                </div>
+              ) : null}
             </div>
-            <div className="rounded-xl bg-black px-3 py-2 text-xs font-bold text-white">
-              ADMIN
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={load}
+                disabled={loading}
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                Refresh
+              </button>
+
+              <button
+                onClick={changeShop}
+                className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+              >
+                Change Shop
+              </button>
+
+              <button
+                onClick={logout}
+                className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#0f172a] transition hover:bg-gray-100"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
             </div>
           </div>
-          {shop ? (
-            <div className="mt-3 rounded-2xl border p-3">
-              <div className="text-xs text-gray-500">Current Shop</div>
-              <div className="text-base font-bold text-gray-900">{shop.shopName}</div>
-              <div className="text-xs text-gray-500">
-                {shop.phone || "No phone"} {shop.address ? `• ${shop.address}` : ""}
-              </div>
-            </div>
-          ) : null}
         </div>
 
-        <div className="mt-4 rounded-2xl bg-black p-5 text-white shadow-sm">
-          <div className="text-sm opacity-80">Dashboard</div>
-          <div className="mt-1 text-2xl font-extrabold">Aaj ka status 👇</div>
-          {data.todayDate ? (
-            <div className="mt-2 text-xs opacity-80">Date: {data.todayDate}</div>
-          ) : null}
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatCard
-            label="Today Sales"
+            title="Today Sales"
             value={`₹ ${data.todaySales}`}
             sub="Cash + UPI"
             to="/sales"
+            icon={<BadgeIndianRupee className="h-5 w-5" />}
           />
           <StatCard
-            label="Low Stock"
-            value={data.lowStockCount}
-            sub="Qty ≤ MinStock"
-            to="/stock"
-          />
-          <StatCard
-            label="Total Baki"
-            value={`₹ ${data.totalBaki}`}
-            sub="Udhaar total"
-            to="/khata"
-          />
-          <StatCard
-            label="Customers"
+            title="Total Customers"
             value={data.totalCustomers}
-            sub="Total count"
+            sub="Linked customers"
             to="/customers"
+            icon={<Users className="h-5 w-5" />}
+          />
+          <StatCard
+            title="Total Baki"
+            value={`₹ ${data.totalBaki}`}
+            sub="Khata balance"
+            to="/khata"
+            icon={<Wallet className="h-5 w-5" />}
+          />
+          <StatCard
+            title="Low Stock"
+            value={data.lowStockCount}
+            sub="Need attention"
+            to="/stock"
+            icon={<Boxes className="h-5 w-5" />}
           />
         </div>
 
-        <div className="mt-5">
-          <div className="mb-2 text-sm font-bold text-gray-900">Quick Actions</div>
-          <div className="grid gap-3">
-            <ActionBtn to="/khata" variant="dark">
-              📒 Khata (Udhaar / Payment)
-            </ActionBtn>
-            <div className="grid grid-cols-2 gap-3">
-              <ActionBtn to="/sales" variant="light">
-                💰 Daily Sales
-              </ActionBtn>
-              <ActionBtn to="/stock" variant="light">
-                📦 Stock
-              </ActionBtn>
-            </div>
-            <ActionBtn to="/customers" variant="light">
-              👤 Customers
-            </ActionBtn>
-          </div>
+        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+          <ActionCard
+            to="/customers"
+            title="Customers"
+            sub="Customer add karo, detail dekho aur history track karo."
+          />
+          <ActionCard
+            to="/khata"
+            title="Khata"
+            sub="Udhaar aur payment entries clean way me manage karo."
+          />
+          <ActionCard
+            to="/stock"
+            title="Stock"
+            sub="Products, low stock aur quick quantity updates handle karo."
+          />
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <ActionCard
+            to="/sales"
+            title="Daily Sales"
+            sub="Cash aur UPI ke through aaj ki sales save aur review karo."
+          />
+          <ActionCard
+            to="/shops"
+            title="My Shops"
+            sub="Apni dusri shops ko open ya switch karo."
+          />
         </div>
 
         {err ? (
-          <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-red-600 shadow-sm ring-1 ring-black/5">
+          <div className="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
             {err}
           </div>
         ) : null}
-      </Container>
-
-      <BottomNav />
-    </>
+      </div>
+    </div>
   );
 }

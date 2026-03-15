@@ -17,13 +17,21 @@ router.post("/", protect, adminOnly, async (req, res, next) => {
       items = [],
     } = req.body;
 
-    if (!shopId || !customerId || !type || !amount) {
+    if (!shopId || !customerId || !type || amount === undefined) {
       return res.status(400).json({
         message: "shopId, customerId, type, amount required",
       });
     }
 
     const amt = Number(amount);
+
+    if (!Number.isFinite(amt) || amt <= 0) {
+      return res.status(400).json({ message: "Amount must be greater than 0" });
+    }
+
+    if (!["UDAAR", "PAYMENT"].includes(type)) {
+      return res.status(400).json({ message: "Invalid transaction type" });
+    }
 
     const relation = await ShopCustomer.findOne({
       shopId,
@@ -39,8 +47,8 @@ router.post("/", protect, adminOnly, async (req, res, next) => {
       customerId,
       type,
       amount: amt,
-      note,
-      items,
+      note: String(note || "").trim(),
+      items: Array.isArray(items) ? items : [],
     });
 
     if (type === "UDAAR") {
@@ -58,9 +66,13 @@ router.post("/", protect, adminOnly, async (req, res, next) => {
 });
 
 // list customer transactions by shop
-router.get("/:customerId", protect, async (req, res, next) => {
+router.get("/:customerId", protect, adminOnly, async (req, res, next) => {
   try {
     const { shopId } = req.query;
+
+    if (!shopId) {
+      return res.status(400).json({ message: "shopId required" });
+    }
 
     const list = await Transaction.find({
       shopId,

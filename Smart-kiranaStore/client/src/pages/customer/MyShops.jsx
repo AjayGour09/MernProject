@@ -98,4 +98,4 @@ export default function MyShops() {
       </div>
     </div>
   );
-}
+8}

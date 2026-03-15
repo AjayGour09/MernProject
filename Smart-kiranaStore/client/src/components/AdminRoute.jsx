@@ -5,11 +5,11 @@ export default function AdminRoute({ children }) {
   const user = AuthService.getUser();
 
   if (!AuthService.isLoggedIn() || !user) {
-    return <Navigate to="/auth/login/admin" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   if (user.role !== "admin") {
-    return <Navigate to="/auth/login/customer" replace />;
+    return <Navigate to="/customer/login" replace />;
   }
 
   return children;

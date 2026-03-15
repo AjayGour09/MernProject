@@ -16,7 +16,7 @@ const customerSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      default: "",
     },
   },
   { timestamps: true }
@@ -24,12 +24,16 @@ const customerSchema = new mongoose.Schema(
 
 customerSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
+  if (!this.password) return;
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
 customerSchema.methods.comparePassword = async function (plainPassword) {
+  if (!this.password) return false;
   return bcrypt.compare(plainPassword, this.password);
 };
 
-export default mongoose.models.Customer || mongoose.model("Customer", customerSchema);
+export default mongoose.models.Customer ||
+  mongoose.model("Customer", customerSchema);
