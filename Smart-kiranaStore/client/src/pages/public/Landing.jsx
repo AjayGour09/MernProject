@@ -4,9 +4,10 @@ import {
   Store,
   ChevronDown,
   ArrowRight,
-  ShieldCheck,
-  User2,
   Sparkles,
+  Receipt,
+  Boxes,
+  Users,
 } from "lucide-react";
 
 function Dropdown({ label, items }) {
@@ -34,13 +35,13 @@ function Dropdown({ label, items }) {
   }, []);
 
   return (
-    <div ref={wrapRef} className="relative z-[60]">
+    <div ref={wrapRef} className="relative z-[220]">
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
       >
-        {label}
+        <span>{label}</span>
         <ChevronDown
           className={`h-4 w-4 transition-transform duration-200 ${
             open ? "rotate-180" : ""
@@ -49,7 +50,7 @@ function Dropdown({ label, items }) {
       </button>
 
       <div
-        className={`absolute right-0 top-[calc(100%+12px)] z-[70] w-60 rounded-3xl border border-white/10 bg-[#12141b]/95 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur-2xl transition-all duration-200 ${
+        className={`absolute right-0 top-[calc(100%+10px)] z-[250] w-60 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg transition-all duration-200 ${
           open
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-2 opacity-0"
@@ -60,7 +61,7 @@ function Dropdown({ label, items }) {
             key={item.label}
             to={item.to}
             onClick={() => setOpen(false)}
-            className="flex items-center justify-between rounded-2xl px-4 py-3 text-sm text-white/80 transition hover:bg-white/[0.06] hover:text-white"
+            className="flex items-center justify-between rounded-xl px-4 py-3 text-sm text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
           >
             <span>{item.label}</span>
             <ArrowRight className="h-4 w-4" />
@@ -71,66 +72,75 @@ function Dropdown({ label, items }) {
   );
 }
 
-function AuthOption({ to, title, sub, icon }) {
+function FeatureCard({ icon, title, text }) {
   return (
-    <Link
-      to={to}
-      className="group rounded-[24px] border border-white/10 bg-white/[0.05] p-4 transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.07] hover:shadow-xl"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-white">
-            {icon}
-          </div>
-
-          <h3 className="mt-4 text-lg font-extrabold tracking-tight text-white">
-            {title}
-          </h3>
-          <p className="mt-1 text-sm leading-6 text-white/58">{sub}</p>
-        </div>
-
-        <div className="rounded-full bg-white/10 p-2 transition-transform duration-300 group-hover:translate-x-1">
-          <ArrowRight className="h-4 w-4 text-white" />
-        </div>
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500 text-white">
+        {icon}
       </div>
-    </Link>
+      <h3 className="mt-4 text-lg font-bold text-slate-900">{title}</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-500">{text}</p>
+    </div>
   );
 }
 
-function MiniCard({ title, sub }) {
+function PreviewCard() {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-white/[0.05] p-4">
-      <div className="text-lg font-bold text-white">{title}</div>
-      <div className="mt-1 text-sm text-white/55">{sub}</div>
+    <div className="rounded-3xl bg-white p-5 text-slate-900 shadow-lg">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+            Shop Overview
+          </p>
+          <h3 className="mt-1 text-lg font-bold">Today’s Summary</h3>
+        </div>
+        <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+          Live
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3">
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs text-slate-500">Sales</p>
+          <p className="mt-1 text-2xl font-bold">₹12,480</p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs text-slate-500">Pending Khata</p>
+          <p className="mt-1 text-2xl font-bold">₹4,250</p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs text-slate-500">Low Stock Items</p>
+          <p className="mt-1 text-2xl font-bold">07</p>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-[#07090f] text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.14),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.06),transparent_22%)]" />
-      <div className="absolute left-1/2 top-0 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-indigo-500/10 blur-[120px]" />
-
-      <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        <header className="relative z-50 rounded-[30px] border border-white/10 bg-white/[0.04] px-5 py-4 backdrop-blur-2xl">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-black shadow-lg">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+        <header className="relative z-[200] rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500 text-white">
                 <Store className="h-5 w-5" />
               </div>
 
-              <div className="min-w-0">
-                <div className="truncate text-xl font-black tracking-tight">
+              <div>
+                <h1 className="text-xl font-bold text-slate-900">
                   Smart Kirana
-                </div>
-                <div className="truncate text-xs text-white/45">
-                  Production-ready kirana workflow
-                </div>
+                </h1>
+                <p className="text-xs text-slate-500">
+                  Simple store management system
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap gap-3">
               <Dropdown
                 label="Login"
                 items={[
@@ -138,6 +148,7 @@ export default function Landing() {
                   { label: "Customer Login", to: "/customer/login" },
                 ]}
               />
+
               <Dropdown
                 label="Register"
                 items={[
@@ -149,90 +160,84 @@ export default function Landing() {
           </div>
         </header>
 
-        <section className="relative z-10 mt-6 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[36px] border border-white/10 bg-gradient-to-br from-[#11131b] via-[#0b1020] to-[#090b11] p-7 shadow-[0_30px_100px_rgba(0,0,0,0.45)] md:p-9">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-white/75">
+        <section className="mt-8 grid gap-6 rounded-3xl bg-emerald-500 px-6 py-8 text-white shadow-sm sm:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:px-10 lg:py-10">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium">
               <Sparkles className="h-4 w-4" />
-              Minimal, premium and production-ready
+              Smart and easy workflow
             </div>
 
-            <h1 className="mt-6 max-w-3xl text-4xl font-black leading-[0.98] tracking-tight sm:text-5xl xl:text-6xl">
-              Smart kirana system
-              <span className="block text-white/40">for admin and customer</span>
-            </h1>
+            <h2 className="mt-5 max-w-2xl text-4xl font-bold leading-tight sm:text-5xl">
+              Manage your kirana store with ease
+            </h2>
 
-            <p className="mt-5 max-w-xl text-sm leading-7 text-white/58 sm:text-base">
-              Login, register, manage shop, track khata and access customer
-              history in one clean workflow.
+            <p className="mt-4 max-w-xl text-sm leading-7 text-white/90 sm:text-base">
+              Handle billing, stock, khata and customer records in one simple
+              and reliable system for daily shop operations.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-7 flex flex-wrap gap-3">
               <Link
                 to="/admin/login"
-                className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-black transition hover:-translate-y-0.5 hover:shadow-xl"
+                className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-emerald-600 transition hover:bg-slate-100"
               >
                 Admin Login
-                <ArrowRight className="h-4 w-4" />
               </Link>
 
               <Link
                 to="/customer/login"
-                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/[0.08]"
+                className="rounded-full border border-white/30 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
               >
                 Customer Login
-                <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 
-            <div className="mt-9 grid gap-4 sm:grid-cols-3">
-              <MiniCard title="Admin" sub="Shop management" />
-              <MiniCard title="Customer" sub="Khata and history" />
-              <MiniCard title="Simple" sub="Clean access flow" />
+            <div className="mt-8 flex flex-wrap gap-3">
+              <span className="rounded-full bg-white/15 px-4 py-2 text-sm font-medium">
+                Billing
+              </span>
+              <span className="rounded-full bg-white/15 px-4 py-2 text-sm font-medium">
+                Stock
+              </span>
+              <span className="rounded-full bg-white/15 px-4 py-2 text-sm font-medium">
+                Khata
+              </span>
             </div>
           </div>
 
-          <div className="rounded-[36px] border border-white/10 bg-white/[0.04] p-5 backdrop-blur-2xl">
-            <div className="mb-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-white/45">
-                Access
-              </div>
-              <h2 className="mt-2 text-3xl font-black tracking-tight text-white">
-                Choose your path
-              </h2>
-              <p className="mt-2 text-sm text-white/55">
-                Login ya register karke apna workflow start karo.
-              </p>
-            </div>
+          <div>
+            <PreviewCard />
+          </div>
+        </section>
 
-            <div className="grid gap-4">
-              <AuthOption
-                to="/admin/login"
-                title="Admin Login"
-                sub="Dashboard, customers, stock and sales access."
-                icon={<ShieldCheck className="h-5 w-5" />}
-              />
+        <section className="mt-8">
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-emerald-600">
+              Why Smart Kirana
+            </p>
+            <h3 className="mt-1 text-2xl font-bold text-slate-900">
+              Everything you need for daily store management
+            </h3>
+          </div>
 
-              <AuthOption
-                to="/admin/setup"
-                title="Admin Register"
-                sub="Create a new admin account and start setup."
-                icon={<Store className="h-5 w-5" />}
-              />
+          <div className="grid gap-4 md:grid-cols-3">
+            <FeatureCard
+              icon={<Receipt className="h-5 w-5" />}
+              title="Billing"
+              text="Keep daily sales and purchase entries organized in one place."
+            />
 
-              <AuthOption
-                to="/customer/login"
-                title="Customer Login"
-                sub="Check linked shops, khata and history."
-                icon={<User2 className="h-5 w-5" />}
-              />
+            <FeatureCard
+              icon={<Boxes className="h-5 w-5" />}
+              title="Stock"
+              text="Track available items and avoid confusion in your inventory."
+            />
 
-              <AuthOption
-                to="/customer/set-password"
-                title="Customer Register"
-                sub="First-time password setup for customer access."
-                icon={<User2 className="h-5 w-5" />}
-              />
-            </div>
+            <FeatureCard
+              icon={<Users className="h-5 w-5" />}
+              title="Customers"
+              text="Manage customer records, khata details and payment history."
+            />
           </div>
         </section>
       </div>
