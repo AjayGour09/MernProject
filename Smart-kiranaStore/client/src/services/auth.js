@@ -60,6 +60,10 @@ export const AuthService = {
     return post("/auth/customer/set-password", body);
   },
 
+  getToken() {
+    return localStorage.getItem(TOKEN_KEY) || "";
+  },
+
   getUser() {
     try {
       return JSON.parse(localStorage.getItem(USER_KEY) || "null");

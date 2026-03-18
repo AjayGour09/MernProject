@@ -1,116 +1,71 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { AuthService } from "../services/auth";
 
-import Landing from "../pages/public/Landing.jsx";
-import Home from "../pages/home/Home.jsx";
-import Customers from "../pages/customer/Customers.jsx";
-import Khata from "../pages/khata/Khata.jsx";
-import Stock from "../pages/stock/Stock.jsx";
-import Sales from "../pages/sales/Sales.jsx";
-import CustomerDetails from "../pages/CustomerDetails/CustomerDetails.jsx";
+export default function BottomNav() {
+  const { pathname } = useLocation();
 
-import AdminLogin from "../pages/auth/AdminLogin.jsx";
-import AdminSetup from "../pages/auth/AdminSetup.jsx";
-import CustomerLogin from "../pages/auth/CustomerLogin.jsx";
-import CustomerSetPassword from "../pages/auth/CustomerSetPassword.jsx";
-import MyAccount from "../pages/customer/MyAccount.jsx";
-import MyCustomerShops from "../pages/customer/MyShops.jsx";
-import MyShops from "../pages/shop/MyShops.jsx";
+  const logout = () => {
+    AuthService.logout();
+    window.location.href = "/";
+  };
 
-import AdminRoute from "./AdminRoute.jsx";
-import CustomerRoute from "./CustomerRoute.jsx";
+  const items = [
+    {
+      to: "/dashboard",
+      label: "Home",
+      icon: "🏠",
+    },
+    {
+      to: "/customers",
+      label: "Customers",
+      icon: "👥",
+    },
+    {
+      to: "/stock",
+      label: "Stock",
+      icon: "📦",
+    },
+    {
+      to: "/sales",
+      label: "Sales",
+      icon: "💰",
+    },
+  ];
 
-export default function App() {
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Routes>
-        {/* public landing */}
-        <Route path="/" element={<Landing />} />
+    <div className="fixed bottom-4 left-0 right-0 z-50 px-4">
+      <div className="mx-auto max-w-md rounded-3xl bg-white/95 px-3 py-2 shadow-2xl ring-1 ring-black/5 backdrop-blur-xl">
+        <div className="grid grid-cols-5 gap-2">
+          {items.map((item) => {
+            const active = pathname === item.to;
 
-        {/* public auth */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/setup" element={<AdminSetup />} />
-        <Route path="/customer/login" element={<CustomerLogin />} />
-        <Route path="/customer/set-password" element={<CustomerSetPassword />} />
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`flex flex-col items-center justify-center rounded-2xl py-2 transition-all duration-200 ${
+                  active
+                    ? "bg-black text-white shadow-sm"
+                    : "text-gray-500 hover:bg-gray-100"
+                }`}
+              >
+                <span className="text-lg">{item.icon}</span>
+                <span className="mt-1 text-[11px] font-semibold">
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
 
-        {/* admin protected */}
-        <Route
-          path="/shops"
-          element={
-            <AdminRoute>
-              <MyShops />
-            </AdminRoute>
-          }
-        />
-
-        <Route
-          path="/dashboard"
-          element={
-            <AdminRoute>
-              <Home />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/customers"
-          element={
-            <AdminRoute>
-              <Customers />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/customers/:id"
-          element={
-            <AdminRoute>
-              <CustomerDetails />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/khata"
-          element={
-            <AdminRoute>
-              <Khata />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/stock"
-          element={
-            <AdminRoute>
-              <Stock />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/sales"
-          element={
-            <AdminRoute>
-              <Sales />
-            </AdminRoute>
-          }
-        />
-
-        {/* customer protected */}
-        <Route
-          path="/my-shops"
-          element={
-            <CustomerRoute>
-              <MyCustomerShops />
-            </CustomerRoute>
-          }
-        />
-        <Route
-          path="/my-account"
-          element={
-            <CustomerRoute>
-              <MyAccount />
-            </CustomerRoute>
-          }
-        />
-
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <button
+            onClick={logout}
+            className="flex flex-col items-center justify-center rounded-2xl py-2 text-gray-500 transition-all duration-200 hover:bg-red-50 hover:text-red-600"
+          >
+            <span className="text-lg">🚪</span>
+            <span className="mt-1 text-[11px] font-semibold">Logout</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

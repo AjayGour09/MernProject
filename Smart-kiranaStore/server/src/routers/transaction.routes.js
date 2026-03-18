@@ -1,13 +1,25 @@
 import { Router } from "express";
+import mongoose from "mongoose";
+
 import Transaction from "../models/Transaction.model.js";
 import ShopCustomer from "../models/ShopCustomer.model.js";
+
 import { protect, adminOnly } from "../middlewares/auth.middleware.js";
+import { verifyShopOwner } from "../utils/shopOwner.js";
+import { createAuditLog } from "../utils/auditLog.js";
 
 const router = Router();
 
-// add transaction
+
+// ===============================
+// ADD TRANSACTION (ATOMIC + AUDIT)
+// ===============================
 router.post("/", protect, adminOnly, async (req, res, next) => {
+  const session = await mongoose.startSession();
+
   try {
+    session.startTransaction();
+
     const {
       shopId,
       customerId,
@@ -18,38 +30,68 @@ router.post("/", protect, adminOnly, async (req, res, next) => {
     } = req.body;
 
     if (!shopId || !customerId || !type || amount === undefined) {
+      await session.abortTransaction();
+
       return res.status(400).json({
         message: "shopId, customerId, type, amount required",
       });
     }
 
+    await verifyShopOwner(shopId, req.user.id);
+
     const amt = Number(amount);
 
     if (!Number.isFinite(amt) || amt <= 0) {
-      return res.status(400).json({ message: "Amount must be greater than 0" });
+      await session.abortTransaction();
+
+      return res.status(400).json({
+        message: "Amount must be greater than 0",
+      });
     }
 
     if (!["UDAAR", "PAYMENT"].includes(type)) {
-      return res.status(400).json({ message: "Invalid transaction type" });
+      await session.abortTransaction();
+
+      return res.status(400).json({
+        message: "Invalid transaction type",
+      });
     }
 
     const relation = await ShopCustomer.findOne({
       shopId,
       customerId,
-    });
+    }).session(session);
 
     if (!relation) {
-      return res.status(404).json({ message: "Customer not linked to shop" });
+      await session.abortTransaction();
+
+      return res.status(404).json({
+        message: "Customer not linked to this shop",
+      });
     }
 
-    const tx = await Transaction.create({
-      shopId,
-      customerId,
-      type,
-      amount: amt,
-      note: String(note || "").trim(),
-      items: Array.isArray(items) ? items : [],
-    });
+    const cleanItems = Array.isArray(items)
+      ? items.map((it) => ({
+          name: String(it.name || "").trim(),
+          qty: Number(it.qty || 0),
+          price: Number(it.price || 0),
+          total: Number(it.total || 0),
+        }))
+      : [];
+
+    const tx = await Transaction.create(
+      [
+        {
+          shopId,
+          customerId,
+          type,
+          amount: amt,
+          note: String(note).trim().slice(0, 120),
+          items: cleanItems,
+        },
+      ],
+      { session }
+    );
 
     if (type === "UDAAR") {
       relation.balance += amt;
@@ -57,27 +99,53 @@ router.post("/", protect, adminOnly, async (req, res, next) => {
       relation.balance -= amt;
     }
 
-    await relation.save();
+    await relation.save({ session });
 
-    res.status(201).json(tx);
+    await session.commitTransaction();
+    session.endSession();
+
+    await createAuditLog({
+      userId: req.user.id,
+      role: req.user.role,
+      action: "ADD_TRANSACTION",
+      shopId,
+      details: {
+        customerId,
+        type,
+        amount: amt,
+      },
+    });
+
+    res.status(201).json(tx[0]);
   } catch (e) {
+    await session.abortTransaction();
+    session.endSession();
     next(e);
   }
 });
 
-// list customer transactions by shop
+
+// ===============================
+// LIST CUSTOMER TRANSACTIONS
+// ===============================
 router.get("/:customerId", protect, adminOnly, async (req, res, next) => {
   try {
     const { shopId } = req.query;
 
     if (!shopId) {
-      return res.status(400).json({ message: "shopId required" });
+      return res.status(400).json({
+        message: "shopId required",
+      });
     }
+
+    await verifyShopOwner(shopId, req.user.id);
 
     const list = await Transaction.find({
       shopId,
       customerId: req.params.customerId,
-    }).sort({ createdAt: -1 });
+    }).sort({
+      createdAt: -1,
+    });
 
     res.json(list);
   } catch (e) {

@@ -1,68 +1,46 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { User, Mail, Lock, Store, ArrowRight } from "lucide-react";
-
-const API_BASE = "http://localhost:5000/api";
-
-async function parseError(res) {
-  try {
-    const data = await res.json();
-    return data?.message || "Request failed";
-  } catch {
-    try {
-      return await res.text();
-    } catch {
-      return "Request failed";
-    }
-  }
-}
+import {
+  ShieldCheck,
+  User,
+  Mail,
+  Lock,
+  ArrowRight,
+  Sparkles,
+} from "lucide-react";
+import { AuthService } from "../../services/auth";
 
 export default function AdminSetup() {
   const navigate = useNavigate();
 
-  const [name, setName] = useState("Admin");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [err, setErr] = useState("");
-  const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setErr("");
-    setMsg("");
 
-    if (!email.trim() || !password.trim()) {
-      setErr("Email aur password required");
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      setErr("Sab fields required hain");
       return;
     }
 
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/auth/setup-admin`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: name.trim() || "Admin",
-          email: email.trim(),
-          password: password.trim(),
-        }),
+      await AuthService.adminRegister({
+        name: name.trim(),
+        email: email.trim(),
+        password: password.trim(),
       });
 
-      if (!res.ok) {
-        throw new Error(await parseError(res));
-      }
-
-      setMsg("Admin account created successfully");
-
-      setTimeout(() => {
-        navigate("/admin/login");
-      }, 1000);
-    } catch (error) {
-      setErr(error.message || "Setup failed");
+      navigate("/admin/login", { replace: true });
+    } catch (e) {
+      setErr(e.message || "Admin setup failed");
     } finally {
       setLoading(false);
     }
@@ -70,89 +48,92 @@ export default function AdminSetup() {
 
   return (
     <div className="min-h-screen bg-[#f5f7fb] px-4 py-8">
-      <div className="mx-auto max-w-5xl">
-        <div className="grid overflow-hidden rounded-[32px] border border-black/5 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)] lg:grid-cols-2">
-          <div className="hidden bg-[#0f172a] p-10 text-white lg:flex lg:flex-col lg:justify-between">
+      <div className="mx-auto max-w-6xl">
+        <div className="grid overflow-hidden rounded-[36px] border border-black/5 bg-white shadow-[0_25px_80px_rgba(15,23,42,0.10)] lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="hidden bg-gradient-to-br from-black via-gray-900 to-gray-800 p-10 text-white lg:flex lg:flex-col lg:justify-between">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold">
-                <Store className="h-4 w-4" />
-                Smart Kirana
+                <ShieldCheck className="h-4 w-4" />
+                Admin Setup
               </div>
 
-              <h1 className="mt-8 text-4xl font-black leading-tight tracking-tight">
-                Create admin
-                <span className="block text-white/65">start your setup</span>
+              <h1 className="mt-8 text-5xl font-black leading-tight tracking-tight">
+                Create secure
+                <span className="block text-white/65">admin access</span>
               </h1>
 
-              <p className="mt-4 max-w-md text-sm leading-7 text-white/70">
-                Apna admin account banao aur Smart Kirana dashboard use karna start karo.
+              <p className="mt-5 max-w-md text-sm leading-7 text-white/75">
+                Smart Kirana ka admin account create karke apna business control
+                dashboard activate karo.
               </p>
+
+              <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
+                  <Sparkles className="h-4 w-4" />
+                  One-time setup
+                </div>
+
+                <div className="mt-2 text-sm text-white/65">
+                  Ek baar account banao, fir shops aur operations manage karo.
+                </div>
+              </div>
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-              <div className="text-sm font-semibold text-white/70">Quick setup</div>
-              <div className="mt-2 text-2xl font-black">Minimal • Clean • Ready</div>
+              <div className="text-sm font-semibold text-white/70">
+                Secure Start
+              </div>
+              <div className="mt-2 text-2xl font-black">
+                Fast • Protected • Reliable
+              </div>
             </div>
           </div>
 
-          <div className="p-6 sm:p-8 md:p-10">
-            <div className="mx-auto max-w-md">
-              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
-                Setup
+          <div className="flex items-center p-6 sm:p-8 md:p-10 lg:p-12">
+            <div className="mx-auto w-full max-w-md">
+              <div className="text-sm font-semibold uppercase tracking-[0.22em] text-gray-500">
+                Admin setup
               </div>
-              <h2 className="mt-2 text-3xl font-black tracking-tight text-gray-900">
+
+              <h2 className="mt-3 text-4xl font-black tracking-tight text-gray-900">
                 Create account
               </h2>
-              <p className="mt-2 text-sm text-gray-500">
-                Bas basic details fill karo
+
+              <p className="mt-3 text-sm leading-6 text-gray-500">
+                Admin details fill karke first account create karo.
               </p>
 
-              <form onSubmit={onSubmit} className="mt-8 space-y-4">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-700">
-                    Name
-                  </label>
-                  <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 focus-within:border-black focus-within:bg-white">
-                    <User className="h-5 w-5 text-gray-400" />
-                    <input
-                      placeholder="Admin name"
-                      className="w-full bg-transparent text-base outline-none"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                    />
-                  </div>
+              <form onSubmit={onSubmit} className="mt-8 space-y-5">
+                <div className="flex items-center gap-3 rounded-2xl border bg-gray-50 px-4 py-3.5">
+                  <User className="h-5 w-5 text-gray-400" />
+                  <input
+                    placeholder="Full name"
+                    className="w-full bg-transparent outline-none"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
                 </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-700">
-                    Email
-                  </label>
-                  <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 focus-within:border-black focus-within:bg-white">
-                    <Mail className="h-5 w-5 text-gray-400" />
-                    <input
-                      type="email"
-                      placeholder="Enter email"
-                      className="w-full bg-transparent text-base outline-none"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
+                <div className="flex items-center gap-3 rounded-2xl border bg-gray-50 px-4 py-3.5">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    className="w-full bg-transparent outline-none"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-700">
-                    Password
-                  </label>
-                  <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 focus-within:border-black focus-within:bg-white">
-                    <Lock className="h-5 w-5 text-gray-400" />
-                    <input
-                      type="password"
-                      placeholder="Create password"
-                      className="w-full bg-transparent text-base outline-none"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
+                <div className="flex items-center gap-3 rounded-2xl border bg-gray-50 px-4 py-3.5">
+                  <Lock className="h-5 w-5 text-gray-400" />
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    className="w-full bg-transparent outline-none"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
                 </div>
 
                 {err ? (
@@ -161,35 +142,22 @@ export default function AdminSetup() {
                   </div>
                 ) : null}
 
-                {msg ? (
-                  <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">
-                    {msg}
-                  </div>
-                ) : null}
-
                 <button
                   type="submit"
                   disabled={loading}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0f172a] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-black disabled:opacity-60"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-black px-5 py-3.5 text-sm font-bold text-white"
                 >
                   {loading ? "Creating..." : "Create Admin"}
                   {!loading ? <ArrowRight className="h-4 w-4" /> : null}
                 </button>
               </form>
 
-              <div className="mt-6 space-y-3 text-center">
+              <div className="mt-6 text-center">
                 <Link
                   to="/admin/login"
-                  className="block text-sm font-semibold text-gray-600 underline underline-offset-4"
+                  className="text-sm font-semibold text-gray-600 underline"
                 >
-                  Already have admin? Login
-                </Link>
-
-                <Link
-                  to="/"
-                  className="block text-sm font-semibold text-gray-500 underline underline-offset-4"
-                >
-                  Back to home
+                  Already have admin account?
                 </Link>
               </div>
             </div>

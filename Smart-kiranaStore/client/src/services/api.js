@@ -9,7 +9,11 @@ async function parseError(res) {
     const data = await res.json();
     return data?.message || "Request failed";
   } catch {
-    return await res.text();
+    try {
+      return await res.text();
+    } catch {
+      return "Request failed";
+    }
   }
 }
 

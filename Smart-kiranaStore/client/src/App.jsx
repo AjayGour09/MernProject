@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Landing from "./pages/public/Landing.jsx";
+import AuthGateway from "./pages/public/AuthGateway.jsx";
+
 import Home from "./pages/home/Home.jsx";
 import Customers from "./pages/customer/Customers.jsx";
 import Khata from "./pages/khata/Khata.jsx";
@@ -12,9 +14,10 @@ import AdminLogin from "./pages/auth/AdminLogin.jsx";
 import AdminSetup from "./pages/auth/AdminSetup.jsx";
 import CustomerLogin from "./pages/auth/CustomerLogin.jsx";
 import CustomerSetPassword from "./pages/auth/CustomerSetPassword.jsx";
+
 import MyAccount from "./pages/customer/MyAccount.jsx";
-import MyCustomerShops from "./pages/customer/MyShops.jsx";
-import MyShops from "./pages/shop/MyShops.jsx";
+import CustomerMyShops from "./pages/customer/MyShops.jsx";
+import AdminMyShops from "./pages/shop/MyShops.jsx";
 
 import AdminRoute from "./components/AdminRoute.jsx";
 import CustomerRoute from "./components/CustomerRoute.jsx";
@@ -27,21 +30,22 @@ export default function App() {
 
       <div className="min-h-screen bg-gray-100">
         <Routes>
-          {/* public */}
           <Route path="/" element={<Landing />} />
+          <Route path="/auth-gateway" element={<AuthGateway />} />
 
-          {/* auth */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/setup" element={<AdminSetup />} />
           <Route path="/customer/login" element={<CustomerLogin />} />
-          <Route path="/customer/set-password" element={<CustomerSetPassword />} />
+          <Route
+            path="/customer/set-password"
+            element={<CustomerSetPassword />}
+          />
 
-          {/* admin protected */}
           <Route
             path="/shops"
             element={
               <AdminRoute>
-                <MyShops />
+                <AdminMyShops />
               </AdminRoute>
             }
           />
@@ -100,12 +104,11 @@ export default function App() {
             }
           />
 
-          {/* customer protected */}
           <Route
             path="/my-shops"
             element={
               <CustomerRoute>
-                <MyCustomerShops />
+                <CustomerMyShops />
               </CustomerRoute>
             }
           />

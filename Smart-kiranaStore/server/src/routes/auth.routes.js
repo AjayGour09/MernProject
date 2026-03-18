@@ -1,8 +1,15 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
+
 import Admin from "../models/Admin.model.js";
 import Customer from "../models/Customer.model.js";
 import { ENV } from "../config/env.js";
+
+import {
+  adminRegisterSchema,
+  adminLoginSchema,
+  customerLoginSchema,
+} from "../validators/auth.validator.js";
 
 const router = Router();
 
@@ -12,25 +19,25 @@ function signToken(payload) {
   });
 }
 
-router.post("/admin/register", async (req, res) => {
+router.post("/admin/register", async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const parsed = adminRegisterSchema.parse(req.body);
+    const { name, email, password } = parsed;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "name, email, password required" });
-    }
-
-    const cleanEmail = String(email).trim().toLowerCase();
+    const cleanEmail = email.trim().toLowerCase();
 
     const exists = await Admin.findOne({ email: cleanEmail });
+
     if (exists) {
-      return res.status(409).json({ message: "Admin already exists" });
+      return res.status(409).json({
+        message: "Admin already exists",
+      });
     }
 
     const admin = await Admin.create({
-      name: String(name).trim(),
+      name: name.trim(),
       email: cleanEmail,
-      password: String(password),
+      password,
     });
 
     return res.status(201).json({
@@ -42,121 +49,24 @@ router.post("/admin/register", async (req, res) => {
       },
     });
   } catch (e) {
-    return res.status(500).json({ message: e.message || "Admin register failed" });
+    next(e);
   }
 });
 
-router.post("/setup-admin", async (req, res) => {
+router.post("/admin/login", async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const parsed = adminLoginSchema.parse(req.body);
+    const { email, password } = parsed;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "email, password required" });
-    }
-
-    const cleanEmail = String(email).trim().toLowerCase();
-
-    const exists = await Admin.findOne({ email: cleanEmail });
-    if (exists) {
-      return res.status(409).json({ message: "Admin already exists" });
-    }
-
-    const admin = await Admin.create({
-      name: String(name || "Admin").trim(),
-      email: cleanEmail,
-      password: String(password),
-    });
-
-    return res.status(201).json({
-      message: "Admin created successfully",
-      admin: {
-        id: admin._id,
-        name: admin.name,
-        email: admin.email,
-      },
-    });
-  } catch (e) {
-    return res.status(500).json({ message: e.message || "Admin setup failed" });
-  }
-});
-
-router.post("/customer/register", async (req, res) => {
-  try {
-    const { name, phone, password } = req.body;
-
-    if (!name || !phone || !password) {
-      return res.status(400).json({ message: "name, phone, password required" });
-    }
-
-    const cleanPhone = String(phone).trim();
-
-    const exists = await Customer.findOne({ phone: cleanPhone });
-    if (exists) {
-      return res.status(409).json({ message: "Customer already exists" });
-    }
-
-    const customer = await Customer.create({
-      name: String(name).trim(),
-      phone: cleanPhone,
-      password: String(password),
-    });
-
-    return res.status(201).json({
-      message: "Customer registered successfully",
-      customer: {
-        id: customer._id,
-        name: customer.name,
-        phone: customer.phone,
-      },
-    });
-  } catch (e) {
-    return res.status(500).json({ message: e.message || "Customer register failed" });
-  }
-});
-
-router.post("/customer/set-password", async (req, res) => {
-  try {
-    const { phone, password, confirmPassword } = req.body;
-
-    if (!phone || !password || !confirmPassword) {
-      return res.status(400).json({ message: "phone, password, confirmPassword required" });
-    }
-
-    if (String(password) !== String(confirmPassword)) {
-      return res.status(400).json({ message: "Passwords do not match" });
-    }
-
-    const customer = await Customer.findOne({ phone: String(phone).trim() });
-
-    if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
-    }
-
-    customer.password = String(password);
-    await customer.save();
-
-    return res.json({ message: "Password set successfully" });
-  } catch (e) {
-    return res.status(500).json({ message: e.message || "Set password failed" });
-  }
-});
-
-router.post("/admin/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "email & password required" });
-    }
-
-    const cleanEmail = String(email).trim().toLowerCase();
+    const cleanEmail = email.trim().toLowerCase();
     const admin = await Admin.findOne({ email: cleanEmail });
 
     if (!admin) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const ok = await admin.comparePassword(String(password));
+    const ok = await admin.comparePassword(password);
+
     if (!ok) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -178,31 +88,29 @@ router.post("/admin/login", async (req, res) => {
       },
     });
   } catch (e) {
-    return res.status(500).json({ message: e.message || "Admin login failed" });
+    next(e);
   }
 });
 
-router.post("/customer/login", async (req, res) => {
+router.post("/customer/login", async (req, res, next) => {
   try {
-    const { phone, password } = req.body;
+    const parsed = customerLoginSchema.parse(req.body);
+    const { phone, password } = parsed;
 
-    if (!phone || !password) {
-      return res.status(400).json({ message: "phone & password required" });
-    }
-
-    const customer = await Customer.findOne({ phone: String(phone).trim() });
+    const customer = await Customer.findOne({ phone: phone.trim() });
 
     if (!customer) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
     if (!customer.password) {
-      return res.status(400).json({
-        message: "Password not set. Please set password first.",
-      });
+      return res
+        .status(400)
+        .json({ message: "Password not set. Please set password first." });
     }
 
-    const ok = await customer.comparePassword(String(password));
+    const ok = await customer.comparePassword(password);
+
     if (!ok) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -224,7 +132,36 @@ router.post("/customer/login", async (req, res) => {
       },
     });
   } catch (e) {
-    return res.status(500).json({ message: e.message || "Customer login failed" });
+    next(e);
+  }
+});
+
+router.post("/customer/set-password", async (req, res) => {
+  try {
+    const { phone, password, confirmPassword } = req.body;
+
+    if (!phone || !password || !confirmPassword) {
+      return res
+        .status(400)
+        .json({ message: "phone, password, confirmPassword required" });
+    }
+
+    if (String(password) !== String(confirmPassword)) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    const customer = await Customer.findOne({ phone: String(phone).trim() });
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    customer.password = String(password);
+    await customer.save();
+
+    return res.json({ message: "Password set successfully" });
+  } catch (e) {
+    return res.status(500).json({ message: e.message || "Set password failed" });
   }
 });
 

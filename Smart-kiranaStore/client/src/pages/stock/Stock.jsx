@@ -1,283 +1,213 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Container from "../../components/Container";
 import BottomNav from "../../components/BottomNav";
+
 import { StockAPI } from "../../services/stock.api";
-import { AuthService } from "../../services/auth";
-
-function Pill({ active, onClick, children }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-xl px-3 py-2 text-sm font-semibold ${
-        active ? "bg-black text-white" : "border bg-white text-gray-900"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function calcNeed(qty, minStock) {
-  const q = Number(qty || 0);
-  const ms = Number(minStock || 0);
-  const need = ms - q;
-  return need > 0 ? need : 0;
-}
 
 export default function Stock() {
-  const navigate = useNavigate();
-  const shop = AuthService.getSelectedShop();
-
-  const [tab, setTab] = useState("LOW");
-  const [search, setSearch] = useState("");
-  const [items, setItems] = useState([]);
-  const [err, setErr] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const [showAdd, setShowAdd] = useState(false);
   const [name, setName] = useState("");
   const [unit, setUnit] = useState("pcs");
   const [qty, setQty] = useState("");
   const [minStock, setMinStock] = useState("");
 
-  const load = async () => {
-    setErr("");
-    setLoading(true);
+  const [search, setSearch] = useState("");
+  const [items, setItems] = useState([]);
+
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+
+  const load = async (q = search) => {
     try {
-      const data =
-        tab === "LOW" ? await StockAPI.low() : await StockAPI.list(search);
+      setLoading(true);
+      const data = await StockAPI.list(q);
       setItems(Array.isArray(data) ? data : []);
     } catch (e) {
-      setErr(e.message || "Failed to load");
+      setErr(e.message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!shop?._id) {
-      navigate("/shops", { replace: true });
-      return;
-    }
-    load();
-  }, [shop?._id, tab]);
-
-  useEffect(() => {
-    if (tab !== "ALL") return;
-    const t = setTimeout(() => load(), 350);
-    return () => clearTimeout(t);
-  }, [search, tab]);
+    load("");
+  }, []);
 
   const addProduct = async () => {
-    setErr("");
-    const n = name.trim();
-    const u = unit.trim() || "pcs";
-    const q = qty === "" ? 0 : Number(qty);
-    const ms = minStock === "" ? 0 : Number(minStock);
-
-    if (!n) return setErr("Product name required");
-    if (!Number.isFinite(q) || q < 0) return setErr("Qty >= 0 hona chahiye");
-    if (!Number.isFinite(ms) || ms < 0) return setErr("MinStock >= 0 hona chahiye");
+    if (!name.trim()) {
+      return setErr("Product name required");
+    }
 
     try {
-      await StockAPI.add({ name: n, unit: u, qty: q, minStock: ms });
+      await StockAPI.add({
+        name: name.trim(),
+        unit,
+        qty: Number(qty || 0),
+        minStock: Number(minStock || 0),
+      });
+
       setName("");
-      setUnit("pcs");
       setQty("");
       setMinStock("");
-      setShowAdd(false);
-      await load();
+
+      await load("");
     } catch (e) {
-      setErr(e.message || "Failed to add product");
+      setErr(e.message);
     }
   };
 
-  const quickUpdate = async (product, delta, reasonText) => {
-    setErr("");
+  const updateQty = async (productId, change) => {
     try {
       await StockAPI.update({
-        productId: product._id,
-        change: delta,
-        reason: reasonText,
+        productId,
+        change,
+        reason: "manual update",
       });
-      await load();
+
+      await load(search);
     } catch (e) {
-      setErr(e.message || "Update failed");
+      setErr(e.message);
     }
   };
-
-  const computed = useMemo(() => {
-    return items.map((p) => ({
-      ...p,
-      need: calcNeed(p.qty, p.minStock),
-      isLow: Number(p.qty || 0) <= Number(p.minStock || 0),
-    }));
-  }, [items]);
 
   return (
     <>
-      <Container
-        title={`Stock • ${shop?.shopName || ""}`}
-        right={
-          <div className="flex gap-2">
-            <Pill active={tab === "LOW"} onClick={() => setTab("LOW")}>
-              Low
-            </Pill>
-            <Pill active={tab === "ALL"} onClick={() => setTab("ALL")}>
-              All
-            </Pill>
-          </div>
-        }
-      >
-        <div className="rounded-2xl bg-white p-4 shadow ring-1 ring-black/5">
-          {tab === "ALL" ? (
-            <input
-              className="w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
-              placeholder="Search product"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          ) : (
-            <div className="text-sm text-gray-600">
-              Low stock = <b>qty ≤ minStock</b>
-            </div>
-          )}
-
-          <div className="mt-4 rounded-2xl border p-4">
-            <div className="flex items-center justify-between">
-              <div className="text-base font-bold">➕ Add Product</div>
-              <button
-                onClick={() => setShowAdd((s) => !s)}
-                className="rounded-xl border px-3 py-2 text-sm font-semibold"
-              >
-                {showAdd ? "Hide" : "Open"}
-              </button>
-            </div>
-
-            {showAdd ? (
-              <>
-                <input
-                  className="mt-3 w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
-                  placeholder="Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                  <select
-                    className="w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
-                    value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                  >
-                    <option value="pcs">pcs</option>
-                    <option value="kg">kg</option>
-                    <option value="ltr">ltr</option>
-                    <option value="pack">pack</option>
-                  </select>
-
-                  <input
-                    className="w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
-                    placeholder="Min Stock"
-                    inputMode="numeric"
-                    value={minStock}
-                    onChange={(e) =>
-                      setMinStock(e.target.value.replace(/\D/g, "").slice(0, 6))
-                    }
-                  />
-                </div>
-
-                <input
-                  className="mt-3 w-full rounded-2xl border px-4 py-3 text-base outline-none focus:ring-2 focus:ring-black"
-                  placeholder="Starting Qty"
-                  inputMode="numeric"
-                  value={qty}
-                  onChange={(e) =>
-                    setQty(e.target.value.replace(/\D/g, "").slice(0, 6))
-                  }
-                />
-
-                <button
-                  onClick={addProduct}
-                  className="mt-3 w-full rounded-2xl bg-black py-3 font-semibold text-white"
-                >
-                  ✅ Save Product
-                </button>
-              </>
-            ) : null}
+      <Container title="Stock">
+        {/* SEARCH */}
+        <div className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+          <div className="text-sm font-semibold text-gray-700">
+            Search Product
           </div>
 
-          {err ? <p className="mt-3 text-sm text-red-600">{err}</p> : null}
+          <input
+            className="mt-3 w-full rounded-2xl border px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+            placeholder="Search product"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <button
+            onClick={() => load(search)}
+            className="mt-3 w-full rounded-2xl bg-black py-3 font-semibold text-white"
+          >
+            🔍 Search
+          </button>
         </div>
 
-        <div className="mt-4 space-y-3">
-          {loading ? <p className="text-gray-600">Loading...</p> : null}
+        {/* ADD PRODUCT */}
+        <div className="mt-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+          <div className="text-sm font-semibold text-gray-700">
+            Add Product
+          </div>
 
-          {computed.map((p) => (
-            <div
-              key={p._id}
-              className={`rounded-2xl bg-white p-4 shadow ring-1 ring-black/5 ${
-                p.isLow ? "ring-2 ring-red-500" : ""
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <div className="text-lg font-bold truncate">{p.name}</div>
-                    {p.isLow ? (
-                      <span className="rounded-full bg-red-100 px-2 py-1 text-[10px] font-bold text-red-700">
-                        LOW
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    Unit: {p.unit} • Min: {p.minStock}
-                    {p.need > 0 ? (
-                      <span className="ml-2 text-xs font-semibold text-red-700">
-                        Need: {p.need} {p.unit}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
+          <input
+            className="mt-3 w-full rounded-2xl border px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+            placeholder="Product Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
 
-                <div className="text-right">
-                  <div className="text-xs text-gray-500">Qty</div>
-                  <div className="text-2xl font-extrabold">{p.qty}</div>
-                </div>
-              </div>
+          <div className="grid grid-cols-3 gap-3 mt-3">
+            <input
+              className="rounded-2xl border px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+              placeholder="Qty"
+              value={qty}
+              onChange={(e) => setQty(e.target.value)}
+            />
 
-              <div className="mt-3 grid grid-cols-4 gap-2">
-                <button
-                  onClick={() => quickUpdate(p, -1, "Sold")}
-                  className="rounded-xl border py-3 text-center font-bold"
-                >
-                  -1
-                </button>
-                <button
-                  onClick={() => quickUpdate(p, -5, "Sold")}
-                  className="rounded-xl border py-3 text-center font-bold"
-                >
-                  -5
-                </button>
-                <button
-                  onClick={() => quickUpdate(p, +1, "Restock")}
-                  className="rounded-xl bg-black py-3 text-center font-bold text-white"
-                >
-                  +1
-                </button>
-                <button
-                  onClick={() => quickUpdate(p, +5, "Restock")}
-                  className="rounded-xl bg-black py-3 text-center font-bold text-white"
-                >
-                  +5
-                </button>
-              </div>
+            <input
+              className="rounded-2xl border px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+              placeholder="Min"
+              value={minStock}
+              onChange={(e) => setMinStock(e.target.value)}
+            />
+
+            <input
+              className="rounded-2xl border px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+              placeholder="Unit"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+            />
+          </div>
+
+          <button
+            onClick={addProduct}
+            className="mt-3 w-full rounded-2xl bg-black py-3 font-semibold text-white"
+          >
+            ✅ Save Product
+          </button>
+
+          {err ? (
+            <div className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">
+              {err}
             </div>
-          ))}
+          ) : null}
+        </div>
 
-          {!loading && computed.length === 0 ? (
-            <div className="rounded-2xl bg-white p-4 text-gray-600 shadow">
-              No products found.
+        {/* PRODUCT LIST */}
+        <div className="mt-4 space-y-4">
+          {loading ? (
+            <div className="text-sm text-gray-500">Loading...</div>
+          ) : null}
+
+          {items.map((p) => {
+            const low = Number(p.qty) <= Number(p.minStock);
+
+            return (
+              <div
+                key={p._id}
+                className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-black/5"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="text-lg font-bold text-gray-900">
+                      {p.name}
+                    </div>
+
+                    <div className="text-sm text-gray-500">
+                      {p.unit}
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div
+                      className={`text-2xl font-extrabold ${
+                        low ? "text-red-600" : "text-gray-900"
+                      }`}
+                    >
+                      {p.qty}
+                    </div>
+
+                    {low ? (
+                      <div className="text-xs text-red-500">
+                        Low Stock
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* CONTROLS */}
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  <button
+                    onClick={() => updateQty(p._id, 1)}
+                    className="rounded-2xl border py-3 font-semibold"
+                  >
+                    ➕ Add
+                  </button>
+
+                  <button
+                    onClick={() => updateQty(p._id, -1)}
+                    className="rounded-2xl border py-3 font-semibold"
+                  >
+                    ➖ Reduce
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          {!loading && items.length === 0 ? (
+            <div className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-black/5 text-gray-500">
+              No products yet.
             </div>
           ) : null}
         </div>

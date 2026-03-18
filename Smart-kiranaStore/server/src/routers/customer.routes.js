@@ -2,6 +2,7 @@ import { Router } from "express";
 import Customer from "../models/Customer.model.js";
 import ShopCustomer from "../models/ShopCustomer.model.js";
 import { protect, adminOnly } from "../middlewares/auth.middleware.js";
+import { verifyShopOwner } from "../utils/shopOwner.js";
 
 const router = Router();
 
@@ -10,8 +11,12 @@ router.post("/", protect, adminOnly, async (req, res, next) => {
   try {
     const { shopId, name, phone } = req.body;
 
+    await verifyShopOwner(shopId, req.user.id);
+
     if (!shopId || !name || !phone) {
-      return res.status(400).json({ message: "shopId, name, phone required" });
+      return res.status(400).json({
+        message: "shopId, name, phone required",
+      });
     }
 
     const cleanPhone = String(phone).trim();
@@ -31,7 +36,9 @@ router.post("/", protect, adminOnly, async (req, res, next) => {
     });
 
     if (exists) {
-      return res.status(409).json({ message: "Customer already linked to shop" });
+      return res.status(409).json({
+        message: "Customer already linked to shop",
+      });
     }
 
     const relation = await ShopCustomer.create({
@@ -40,7 +47,10 @@ router.post("/", protect, adminOnly, async (req, res, next) => {
       balance: 0,
     });
 
-    res.status(201).json({ customer, relation });
+    res.status(201).json({
+      customer,
+      relation,
+    });
   } catch (e) {
     next(e);
   }
@@ -51,9 +61,7 @@ router.get("/", protect, adminOnly, async (req, res, next) => {
   try {
     const { shopId, search = "" } = req.query;
 
-    if (!shopId) {
-      return res.status(400).json({ message: "shopId required" });
-    }
+    await verifyShopOwner(shopId, req.user.id);
 
     const relations = await ShopCustomer.find({ shopId })
       .populate({
@@ -84,18 +92,19 @@ router.get("/", protect, adminOnly, async (req, res, next) => {
   }
 });
 
-// single customer with shop balance
+// single customer
 router.get("/:id", protect, adminOnly, async (req, res, next) => {
   try {
     const { shopId } = req.query;
 
-    if (!shopId) {
-      return res.status(400).json({ message: "shopId required" });
-    }
+    await verifyShopOwner(shopId, req.user.id);
 
     const customer = await Customer.findById(req.params.id);
+
     if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({
+        message: "Customer not found",
+      });
     }
 
     const relation = await ShopCustomer.findOne({
@@ -104,7 +113,9 @@ router.get("/:id", protect, adminOnly, async (req, res, next) => {
     });
 
     if (!relation) {
-      return res.status(404).json({ message: "Customer not linked to this shop" });
+      return res.status(404).json({
+        message: "Customer not linked to this shop",
+      });
     }
 
     res.json({
