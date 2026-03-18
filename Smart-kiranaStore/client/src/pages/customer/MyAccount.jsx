@@ -12,6 +12,7 @@ function formatBalance(balance) {
       value: `₹${b}`,
       cls: "text-red-600",
       card: "bg-red-50",
+      badge: "bg-red-50 text-red-700",
     };
   }
 
@@ -21,14 +22,16 @@ function formatBalance(balance) {
       value: `₹${Math.abs(b)}`,
       cls: "text-green-600",
       card: "bg-green-50",
+      badge: "bg-green-50 text-green-700",
     };
   }
 
   return {
-    label: "Status",
-    value: "Clear",
+    label: "Clear",
+    value: "₹0",
     cls: "text-gray-700",
     card: "bg-gray-50",
+    badge: "bg-gray-100 text-gray-700",
   };
 }
 
@@ -80,7 +83,7 @@ export default function MyAccount() {
   const logout = () => {
     AuthService.logout();
     localStorage.removeItem("smart_customer_shop");
-    window.location.href = "/customer/login";
+    window.location.href = "/";
   };
 
   const backToShops = () => {
@@ -88,9 +91,9 @@ export default function MyAccount() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f7fb] px-4 py-5">
+    <div className="min-h-screen bg-[#f5f7fb] px-4 py-5">
       <div className="mx-auto max-w-md">
-        <div className="rounded-[32px] bg-gradient-to-br from-black via-gray-900 to-gray-800 p-5 text-white shadow-lg">
+        <div className="rounded-[30px] bg-gradient-to-br from-black via-gray-900 to-gray-800 p-5 text-white shadow-lg">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-sm font-medium text-white/70">
@@ -117,7 +120,7 @@ export default function MyAccount() {
             onClick={backToShops}
             className="mt-4 w-full rounded-2xl border border-white/15 bg-white/10 py-3 text-sm font-bold text-white transition hover:bg-white/15"
           >
-            ← Back to My Shops
+            Back to My Shops
           </button>
         </div>
 
@@ -126,18 +129,30 @@ export default function MyAccount() {
             <div className="text-xs uppercase tracking-wide text-gray-500">
               Selected Shop
             </div>
-            <div className="mt-2 text-xl font-extrabold text-gray-900">
+            <div className="mt-2 text-xl font-extrabold tracking-tight text-gray-900">
               {shop.shopName}
             </div>
           </div>
         ) : null}
 
-        <div className={`mt-4 rounded-[28px] p-5 shadow-sm ring-1 ring-black/5 ${balanceUI.card}`}>
-          <div className="text-xs uppercase tracking-wide text-gray-500">
-            {balanceUI.label}
-          </div>
-          <div className={`mt-2 text-4xl font-extrabold ${balanceUI.cls}`}>
-            {balanceUI.value}
+        <div
+          className={`mt-4 rounded-[28px] p-5 shadow-sm ring-1 ring-black/5 ${balanceUI.card}`}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">
+                Account Status
+              </div>
+              <div className={`mt-2 text-4xl font-extrabold ${balanceUI.cls}`}>
+                {balanceUI.value}
+              </div>
+            </div>
+
+            <div
+              className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${balanceUI.badge}`}
+            >
+              {balanceUI.label}
+            </div>
           </div>
         </div>
 
@@ -151,28 +166,49 @@ export default function MyAccount() {
           </div>
         ) : null}
 
-        <div className="mt-5 rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/5">
-          <div className="text-base font-bold text-gray-900">My History</div>
+        <div className="mt-5">
+          <div className="mb-3 text-base font-bold text-gray-900">My History</div>
 
-          <div className="mt-4 space-y-4">
+          {!loading && ledger.length === 0 ? (
+            <div className="rounded-[28px] bg-white p-4 text-gray-500 shadow-sm ring-1 ring-black/5">
+              No history yet.
+            </div>
+          ) : null}
+
+          <div className="space-y-4">
             {ledger.map((t) => (
               <div
                 key={t._id}
-                className="rounded-3xl bg-[#fbfcfe] p-4 ring-1 ring-black/5"
+                className="rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5"
               >
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-sm font-bold text-gray-900">
-                      {t.type === "UDAAR" ? "➕ Udhaar" : "✅ Payment"}
+                      {t.type === "UDAAR" ? "Udhaar Entry" : "Payment Entry"}
                     </div>
+
                     <div className="mt-1 text-xs text-gray-500">
                       {new Date(t.createdAt).toLocaleString()}
+                    </div>
+
+                    <div
+                      className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold ${
+                        t.type === "UDAAR"
+                          ? "bg-red-50 text-red-700"
+                          : "bg-green-50 text-green-700"
+                      }`}
+                    >
+                      {t.type}
                     </div>
                   </div>
 
                   <div className="text-right">
                     <div className="text-xs text-gray-500">Amount</div>
-                    <div className="text-xl font-extrabold text-gray-900">
+                    <div
+                      className={`mt-1 text-2xl font-extrabold ${
+                        t.type === "UDAAR" ? "text-red-600" : "text-green-600"
+                      }`}
+                    >
                       ₹{t.amount}
                     </div>
                   </div>
@@ -209,12 +245,6 @@ export default function MyAccount() {
                 ) : null}
               </div>
             ))}
-
-            {!loading && ledger.length === 0 ? (
-              <div className="rounded-3xl bg-gray-50 p-4 text-sm text-gray-500 ring-1 ring-black/5">
-                No history yet.
-              </div>
-            ) : null}
           </div>
         </div>
       </div>

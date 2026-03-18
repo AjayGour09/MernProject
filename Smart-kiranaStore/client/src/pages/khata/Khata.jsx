@@ -58,7 +58,6 @@ export default function Khata() {
       setCustomers(Array.isArray(data) ? data : []);
 
       const qp = params.get("customerId");
-
       if (qp && data.some((c) => c._id === qp)) {
         setSelectedId(qp);
       } else if (data.length) {
@@ -90,7 +89,6 @@ export default function Khata() {
       navigate("/shops", { replace: true });
       return;
     }
-
     loadCustomers();
   }, [shop?._id]);
 
@@ -99,10 +97,7 @@ export default function Khata() {
   }, [selectedId]);
 
   const addItem = () => {
-    setItems((prev) => [
-      ...prev,
-      { name: "", qty: 1, price: 0, total: 0 },
-    ]);
+    setItems((prev) => [...prev, { name: "", qty: 1, price: 0, total: 0 }]);
   };
 
   const updateItem = (index, field, value) => {
@@ -135,12 +130,11 @@ export default function Khata() {
 
   const submitPayment = async () => {
     setErr("");
-
     const amt = Number(amount);
 
     if (!selectedId) return setErr("Customer select karo");
     if (!Number.isFinite(amt) || amt <= 0) {
-      return setErr("Amount > 0 hona chahiye");
+      return setErr("Amount 0 se bada hona chahiye");
     }
 
     try {
@@ -176,10 +170,10 @@ export default function Khata() {
       }))
       .filter((it) => it.name && Number.isFinite(it.qty) && it.qty > 0);
 
-    if (clean.length === 0) return setErr("Items valid nahi hain");
+    if (clean.length === 0) return setErr("Valid items add karo");
 
     const total = clean.reduce((s, it) => s + Number(it.total || 0), 0);
-    if (total <= 0) return setErr("Total amount valid nahi");
+    if (total <= 0) return setErr("Total valid nahi hai");
 
     try {
       await apiPost("/transactions", {
@@ -217,33 +211,28 @@ export default function Khata() {
 
   return (
     <>
-      <Container title="Khata">
-        <div className="rounded-3xl bg-gradient-to-br from-black via-gray-900 to-gray-800 p-5 text-white shadow-lg">
-          <div className="text-sm font-medium text-white/70">
-            {shop?.shopName || "Smart Kirana"}
-          </div>
+      <Container
+        title="Khata"
+        subtitle={shop?.shopName || "Smart Kirana"}
+      >
+        <div className="rounded-[30px] bg-gradient-to-br from-black via-gray-900 to-gray-800 p-5 text-white shadow-lg">
+          <div className="text-sm font-medium text-white/70">Selected Customer</div>
 
-          <div className="mt-3">
-            <label className="text-xs uppercase tracking-wide text-white/60">
-              Customer
-            </label>
-
-            <select
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-base text-white outline-none"
-              value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
-            >
-              {customers.map((c) => (
-                <option key={c._id} value={c._id} className="text-black">
-                  {c.name} ({c.phone})
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            className="mt-3 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-base text-white outline-none"
+            value={selectedId}
+            onChange={(e) => setSelectedId(e.target.value)}
+          >
+            {customers.map((c) => (
+              <option key={c._id} value={c._id} className="text-black">
+                {c.name} ({c.phone})
+              </option>
+            ))}
+          </select>
 
           <div className="mt-4 rounded-3xl bg-white/10 p-4">
             <div className="text-xs uppercase tracking-wide text-white/60">
-              {isBaki ? "Total Baki" : isAdvance ? "Advance Jama" : "Account Status"}
+              {isBaki ? "Total Baki" : isAdvance ? "Advance Jama" : "Account"}
             </div>
 
             <div
@@ -258,13 +247,11 @@ export default function Khata() {
               {balance === 0 ? "Clear" : money(balance)}
             </div>
 
-            {lastEntry ? (
-              <div className="mt-2 text-sm text-white/70">
-                Last Entry: {lastEntry.type} ₹{lastEntry.amount}
-              </div>
-            ) : (
-              <div className="mt-2 text-sm text-white/70">No previous entry</div>
-            )}
+            <div className="mt-2 text-sm text-white/70">
+              {lastEntry
+                ? `Last Entry: ${lastEntry.type} ₹${lastEntry.amount}`
+                : "No previous entry"}
+            </div>
           </div>
 
           {selectedId ? (
@@ -277,26 +264,20 @@ export default function Khata() {
           ) : null}
         </div>
 
-        <div className="mt-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="text-base font-bold text-gray-900">⚡ Quick Udhaar</div>
+        <div className="rounded-[30px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+          <div className="text-base font-bold text-gray-900">Quick Udhaar</div>
 
           <div className="mt-4 grid grid-cols-3 gap-2">
-            <QuickBtn onClick={() => addQuickUdhaarItem(10)} dark>
-              +₹10
-            </QuickBtn>
-            <QuickBtn onClick={() => addQuickUdhaarItem(20)} dark>
-              +₹20
-            </QuickBtn>
-            <QuickBtn onClick={() => addQuickUdhaarItem(50)} dark>
-              +₹50
-            </QuickBtn>
+            <QuickBtn onClick={() => addQuickUdhaarItem(10)} dark>+₹10</QuickBtn>
+            <QuickBtn onClick={() => addQuickUdhaarItem(20)} dark>+₹20</QuickBtn>
+            <QuickBtn onClick={() => addQuickUdhaarItem(50)} dark>+₹50</QuickBtn>
             <QuickBtn onClick={() => addQuickUdhaarItem(100)}>+₹100</QuickBtn>
             <QuickBtn onClick={() => addQuickUdhaarItem(200)}>+₹200</QuickBtn>
             <QuickBtn onClick={() => addQuickUdhaarItem(500)}>+₹500</QuickBtn>
           </div>
         </div>
 
-        <div className="mt-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+        <div className="rounded-[30px] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <div className="flex items-center justify-between gap-3">
             <div className="text-base font-bold text-gray-900">Items for Udhaar</div>
 
@@ -376,12 +357,12 @@ export default function Khata() {
             onClick={submitUdhaar}
             className="mt-4 w-full rounded-2xl bg-black py-3.5 text-sm font-bold text-white transition hover:bg-gray-900"
           >
-            ➕ Save Udhaar
+            Save Udhaar
           </button>
         </div>
 
-        <div className="mt-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="text-base font-bold text-gray-900">✅ Payment Entry</div>
+        <div className="rounded-[30px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+          <div className="text-base font-bold text-gray-900">Payment Entry</div>
 
           <div className="mt-4 flex flex-wrap gap-2">
             <QuickBtn onClick={() => applyQuickPayment(50)}>+50</QuickBtn>
@@ -422,7 +403,7 @@ export default function Khata() {
           ) : null}
         </div>
 
-        <div className="mt-5">
+        <div>
           <div className="mb-3 text-base font-bold text-gray-900">
             Recent Entries
           </div>
@@ -430,7 +411,7 @@ export default function Khata() {
           {loading ? <p className="text-sm text-gray-500">Loading...</p> : null}
 
           {!loading && selectedId && ledger.length === 0 ? (
-            <div className="rounded-3xl bg-white p-4 text-gray-500 shadow-sm ring-1 ring-black/5">
+            <div className="rounded-[28px] bg-white p-4 text-gray-500 shadow-sm ring-1 ring-black/5">
               No entries yet.
             </div>
           ) : null}
@@ -439,7 +420,7 @@ export default function Khata() {
             {ledger.slice(0, 5).map((t) => (
               <div
                 key={t._id}
-                className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-black/5"
+                className="rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>

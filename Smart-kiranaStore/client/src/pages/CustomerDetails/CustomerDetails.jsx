@@ -9,10 +9,10 @@ function Pill({ active, onClick, children }) {
   return (
     <button
       onClick={onClick}
-      className={`rounded-2xl px-4 py-2 text-sm font-semibold transition active:scale-[0.98] ${
+      className={`rounded-2xl px-4 py-2 text-sm font-bold transition ${
         active
-          ? "bg-black text-white shadow-sm"
-          : "bg-white text-gray-800 ring-1 ring-black/5 hover:bg-gray-50"
+          ? "bg-black text-white"
+          : "bg-white text-gray-700 ring-1 ring-black/5 hover:bg-gray-50"
       }`}
     >
       {children}
@@ -27,8 +27,9 @@ function formatBalance(balance) {
     return {
       label: "Baki",
       value: `₹${b}`,
-      cls: "text-red-300",
-      lightCls: "text-red-600",
+      heroCls: "text-red-300",
+      amountCls: "text-red-600",
+      badge: "bg-red-50 text-red-700",
     };
   }
 
@@ -36,16 +37,18 @@ function formatBalance(balance) {
     return {
       label: "Advance",
       value: `₹${Math.abs(b)}`,
-      cls: "text-green-300",
-      lightCls: "text-green-600",
+      heroCls: "text-green-300",
+      amountCls: "text-green-600",
+      badge: "bg-green-50 text-green-700",
     };
   }
 
   return {
     label: "Status",
     value: "Clear",
-    cls: "text-white",
-    lightCls: "text-gray-700",
+    heroCls: "text-white",
+    amountCls: "text-gray-700",
+    badge: "bg-gray-100 text-gray-700",
   };
 }
 
@@ -78,7 +81,7 @@ export default function CustomerDetails() {
       setCustomer(c);
       setLedger(Array.isArray(tx) ? tx : []);
     } catch (e) {
-      setErr(e.message || "Failed to load");
+      setErr(e.message || "Failed to load customer");
     } finally {
       setLoading(false);
     }
@@ -99,12 +102,13 @@ export default function CustomerDetails() {
     <>
       <Container
         title="Customer Details"
+        subtitle={shop?.shopName || "Smart Kirana"}
         right={
           <button
             onClick={load}
-            className="rounded-2xl bg-white px-3 py-2 text-sm font-semibold text-gray-800 ring-1 ring-black/5 transition hover:bg-gray-50 active:scale-[0.98]"
+            className="rounded-2xl bg-white px-3 py-2 text-sm font-bold text-gray-800 ring-1 ring-black/5 transition hover:bg-gray-50"
           >
-            ↻ Refresh
+            Refresh
           </button>
         }
       >
@@ -114,26 +118,36 @@ export default function CustomerDetails() {
           </div>
         ) : null}
 
-        <div className="rounded-3xl bg-gradient-to-br from-black via-gray-900 to-gray-800 p-5 text-white shadow-lg">
-          <div className="text-sm font-medium text-white/70">
-            {shop?.shopName || "Smart Kirana"}
-          </div>
+        <div className="rounded-[30px] bg-gradient-to-br from-black via-gray-900 to-gray-800 p-5 text-white shadow-lg">
+          <div className="text-sm font-medium text-white/70">Customer Profile</div>
 
           <div className="mt-4 flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="truncate text-2xl font-extrabold tracking-tight">
+              <div className="truncate text-3xl font-extrabold tracking-tight">
                 {customer?.name || "Loading..."}
               </div>
               <div className="mt-1 text-sm text-white/70">
                 {customer?.phone || ""}
               </div>
+
+              <div
+                className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold ${
+                  balanceUI.label === "Baki"
+                    ? "bg-red-400/20 text-red-200"
+                    : balanceUI.label === "Advance"
+                    ? "bg-green-400/20 text-green-200"
+                    : "bg-white/10 text-white/80"
+                }`}
+              >
+                {balanceUI.label}
+              </div>
             </div>
 
             <div className="text-right">
               <div className="text-xs uppercase tracking-wide text-white/60">
-                {balanceUI.label}
+                Balance
               </div>
-              <div className={`mt-1 text-3xl font-extrabold ${balanceUI.cls}`}>
+              <div className={`mt-1 text-3xl font-extrabold ${balanceUI.heroCls}`}>
                 {balanceUI.value}
               </div>
             </div>
@@ -142,53 +156,43 @@ export default function CustomerDetails() {
           <div className="mt-5 grid grid-cols-2 gap-3">
             <Link
               to={`/khata?customerId=${id}`}
-              className="rounded-2xl bg-white py-3 text-center text-sm font-bold text-black transition hover:bg-gray-100 active:scale-[0.98]"
+              className="rounded-2xl bg-white py-3 text-center text-sm font-bold text-black transition hover:bg-gray-100"
             >
-              📒 Add Entry
+              Add Entry
             </Link>
 
             <Link
               to="/customers"
-              className="rounded-2xl border border-white/15 bg-white/10 py-3 text-center text-sm font-bold text-white transition hover:bg-white/15 active:scale-[0.98]"
+              className="rounded-2xl border border-white/15 bg-white/10 py-3 text-center text-sm font-bold text-white transition hover:bg-white/15"
             >
-              ← Back
+              Back
             </Link>
           </div>
         </div>
 
-        <div className="mt-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-black/5">
-          <div className="text-sm font-semibold text-gray-700">
-            Filter History
-          </div>
+        <div className="rounded-[30px] bg-white p-4 shadow-sm ring-1 ring-black/5">
+          <div className="text-base font-bold text-gray-900">History Filters</div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             <Pill active={filter === "ALL"} onClick={() => setFilter("ALL")}>
               All
             </Pill>
-            <Pill
-              active={filter === "UDAAR"}
-              onClick={() => setFilter("UDAAR")}
-            >
+            <Pill active={filter === "UDAAR"} onClick={() => setFilter("UDAAR")}>
               Udhaar
             </Pill>
-            <Pill
-              active={filter === "PAYMENT"}
-              onClick={() => setFilter("PAYMENT")}
-            >
+            <Pill active={filter === "PAYMENT"} onClick={() => setFilter("PAYMENT")}>
               Payment
             </Pill>
           </div>
         </div>
 
-        <div className="mt-5">
-          <div className="mb-3 text-base font-bold text-gray-900">
-            History
-          </div>
+        <div>
+          <div className="mb-3 text-base font-bold text-gray-900">History</div>
 
           {loading ? <p className="text-sm text-gray-500">Loading...</p> : null}
 
           {!loading && filtered.length === 0 ? (
-            <div className="rounded-3xl bg-white p-4 text-gray-500 shadow-sm ring-1 ring-black/5">
+            <div className="rounded-[28px] bg-white p-4 text-gray-500 shadow-sm ring-1 ring-black/5">
               No history yet.
             </div>
           ) : null}
@@ -197,26 +201,34 @@ export default function CustomerDetails() {
             {filtered.map((t) => (
               <div
                 key={t._id}
-                className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-black/5"
+                className="rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-sm font-bold text-gray-900">
-                      {t.type === "UDAAR" ? "➕ Udhaar" : "✅ Payment"}
+                      {t.type === "UDAAR" ? "Udhaar Entry" : "Payment Entry"}
                     </div>
 
                     <div className="mt-1 text-xs text-gray-500">
                       {new Date(t.createdAt).toLocaleString()}
+                    </div>
+
+                    <div
+                      className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold ${
+                        t.type === "UDAAR"
+                          ? "bg-red-50 text-red-700"
+                          : "bg-green-50 text-green-700"
+                      }`}
+                    >
+                      {t.type}
                     </div>
                   </div>
 
                   <div className="text-right">
                     <div className="text-xs text-gray-500">Amount</div>
                     <div
-                      className={`text-2xl font-extrabold ${
-                        t.type === "UDAAR"
-                          ? "text-red-600"
-                          : "text-green-600"
+                      className={`mt-1 text-2xl font-extrabold ${
+                        t.type === "UDAAR" ? "text-red-600" : "text-green-600"
                       }`}
                     >
                       ₹{t.amount}
@@ -238,10 +250,7 @@ export default function CustomerDetails() {
                         >
                           <div className="min-w-0 text-gray-800">
                             <span className="font-medium">{it.name}</span>
-                            <span className="text-gray-500">
-                              {" "}
-                              × {it.qty}
-                            </span>
+                            <span className="text-gray-500"> × {it.qty}</span>
                             <span className="text-xs text-gray-500">
                               {" "}
                               (₹{it.price}/unit)

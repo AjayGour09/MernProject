@@ -10,26 +10,10 @@ export default function BottomNav() {
   };
 
   const items = [
-    {
-      to: "/dashboard",
-      label: "Home",
-      icon: "🏠",
-    },
-    {
-      to: "/customers",
-      label: "Customers",
-      icon: "👥",
-    },
-    {
-      to: "/stock",
-      label: "Stock",
-      icon: "📦",
-    },
-    {
-      to: "/sales",
-      label: "Sales",
-      icon: "💰",
-    },
+    { to: "/dashboard", label: "Home", icon: "🏠" },
+    { to: "/customers", label: "Customers", icon: "👥" },
+    { to: "/stock", label: "Stock", icon: "📦" },
+    { to: "/sales", label: "Sales", icon: "💰" },
   ];
 
   return (
