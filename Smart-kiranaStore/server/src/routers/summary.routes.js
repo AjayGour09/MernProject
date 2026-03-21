@@ -1,90 +1,70 @@
 import { Router } from "express";
-
+import Transaction from "../models/Transaction.model.js";
 import ShopCustomer from "../models/ShopCustomer.model.js";
-import Product from "../models/Product.model.js";
-import SaleDay from "../models/SaleDay.model.js";
-
 import { protect, adminOnly } from "../middlewares/auth.middleware.js";
 import { verifyShopOwner } from "../utils/shopOwner.js";
 
 const router = Router();
 
-
-// ===============================
-// DATE HELPER
-// ===============================
-function todayStr() {
-  const d = new Date();
-
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-
-  return `${y}-${m}-${day}`;
-}
-
-
-// ===============================
-// DASHBOARD SUMMARY
-// ===============================
+// GET /summary
 router.get("/", protect, adminOnly, async (req, res, next) => {
   try {
-    const { shopId } = req.query;
+    const { shopId, from, to, type } = req.query;
 
     if (!shopId) {
-      return res.status(400).json({
-        message: "shopId required",
-      });
+      return res.status(400).json({ message: "shopId required" });
     }
 
     await verifyShopOwner(shopId, req.user.id);
 
-    const totalCustomers = await ShopCustomer.countDocuments({
+    // date filter
+    const dateFilter = {};
+    if (from || to) {
+      dateFilter.createdAt = {};
+      if (from) dateFilter.createdAt.$gte = new Date(from);
+      if (to) dateFilter.createdAt.$lte = new Date(to);
+    }
+
+    // type filter
+    const typeFilter = {};
+    if (type && type !== "ALL") {
+      typeFilter.type = type;
+    }
+
+    const filter = {
       shopId,
-    });
+      ...dateFilter,
+      ...typeFilter,
+    };
 
-    const bakiAgg = await ShopCustomer.aggregate([
-      {
-        $match: {
-          shopId,
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          total: {
-            $sum: "$balance",
-          },
-        },
-      },
-    ]);
+    // transactions
+    const transactions = await Transaction.find(filter);
 
-    const totalBaki = bakiAgg[0]?.total || 0;
+    // calculations
+    let totalSales = 0;
+    let totalPayment = 0;
 
-    const lowStockCount = await Product.countDocuments({
-      shopId,
-      $expr: {
-        $lte: ["$qty", "$minStock"],
-      },
-    });
+    for (const tx of transactions) {
+      if (tx.type === "UDHAAR") totalSales += tx.amount;
+      if (tx.type === "PAYMENT") totalPayment += tx.amount;
+    }
 
-    const date = todayStr();
+    const customers = await ShopCustomer.find({ shopId });
 
-    const todayDoc = await SaleDay.findOne({
-      shopId,
-      date,
-    });
+    const totalBaki = customers.reduce(
+      (sum, c) => sum + Number(c.balance || 0),
+      0
+    );
 
-    const todaySales =
-      Number(todayDoc?.cash || 0) +
-      Number(todayDoc?.upi || 0);
+    const lowStockCount = 0; // (we’ll upgrade later)
 
     res.json({
-      totalCustomers,
+      totalCustomers: customers.length,
       totalBaki,
-      lowStockCount,
-      todaySales,
-      todayDate: date,
+      totalSales,
+      totalPayment,
+      net: totalSales - totalPayment,
+      transactionCount: transactions.length,
     });
   } catch (e) {
     next(e);
