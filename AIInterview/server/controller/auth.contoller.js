@@ -12,8 +12,25 @@ export const googleAuth = async (req, res) => {
                 email
             })
         }
-        let token = await genToken()
+        let token = await genToken(user._id)
+        res.cookie("token" , token ,{
+            http:true,
+            secure:false,
+            sameSite:"strict",
+            maxAge:7*24*6060*1000
+        })
+        return res.status(200).json(user)
     } catch (error) {
 
+        return res.status(500).json({message:`Google auth error`})
+    }
+}
+
+export const logout  =async(req , res)=>{
+    try {
+        await res.clearCookie("token")
+        return res.status.json({message:`Logout Successfully `})
+    } catch (error) {
+        return res.status(500).json({message:`Logout Error ${error}`})
     }
 }
